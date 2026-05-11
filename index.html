@@ -634,7 +634,7 @@
   </div>
 </div>
 
-<div id="app-version" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;pointer-events:none;">Rev 9.6</div>
+<div id="app-version" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;pointer-events:none;">Rev 10.3</div>
 
 <div class="notify" id="notify"></div>
 
@@ -1888,12 +1888,19 @@ async function abrirAcordos() {
   document.getElementById('ac-representante').value = '';
   document.getElementById('ac-cond-pag').value = '';
   window._parcelas = [];
+  window._entrada  = null;
   window._acordoCalc = null;
   const painel = document.getElementById('ac-boleto-painel');
   if (painel) painel.style.display = 'none';
   document.getElementById('ac-parcelas-preview').innerHTML = '';
   const v1 = document.getElementById('ac-venc-1parc');
   if (v1) v1.value = '';
+  const ev = document.getElementById('ac-entrada-valor');
+  if (ev) ev.value = '0';
+  const ed = document.getElementById('ac-entrada-data');
+  if (ed) ed.value = '';
+  const ep = document.getElementById('ac-entrada-preview');
+  if (ep) { ep.style.display = 'none'; ep.innerHTML = ''; }
   document.querySelectorAll('.forma-btn').forEach(b => b.classList.remove('active'));
   renderBoletosAcordo();
   setAcStep(1);
@@ -2052,13 +2059,18 @@ function calcParcelas() {
   const total = c.totalFinal || 0;
   if (!total) return;
 
-  const n        = parseInt(document.getElementById('ac-num-parcelas').value)||1;
-  const venc1str = document.getElementById('ac-venc-1parc').value;
-  const tipo     = document.getElementById('ac-intervalo-tipo')?.value || 'mensal';
-  const diasInp  = document.getElementById('ac-intervalo-dias');
+  const n          = parseInt(document.getElementById('ac-num-parcelas').value)||0;
+  const venc1str   = document.getElementById('ac-venc-1parc').value;
+  const tipo       = document.getElementById('ac-intervalo-tipo')?.value || 'mensal';
+  const diasInp    = document.getElementById('ac-intervalo-dias');
+  const entradaVal = parseFloat(document.getElementById('ac-entrada-valor')?.value)||0;
+  const entradaDt  = document.getElementById('ac-entrada-data')?.value;
 
   if (diasInp) diasInp.style.display = tipo === 'dias' ? 'block' : 'none';
-  if (!venc1str) return;
+
+  // Mostra/esconde linha de intervalo se não tem parcelas
+  const intervRow = document.getElementById('ac-intervalo-row');
+  if (intervRow) intervRow.style.display = n === 0 ? 'none' : 'grid';
 
   let intervDias;
   if      (tipo === 'mensal')    intervDias = 30;
@@ -2066,27 +2078,57 @@ function calcParcelas() {
   else if (tipo === 'semanal')   intervDias = 7;
   else intervDias = parseInt(diasInp?.value) || 30;
 
-  const valorParcela = total / n;
-  const linhas = [];
-  window._parcelas = [];
-
-  for (let i = 0; i < n; i++) {
-    const d = new Date(venc1str+'T00:00:00');
-    d.setDate(d.getDate() + intervDias * i);
-    const vencFmt = d.toLocaleDateString('pt-BR');
-    linhas.push(`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--border);font-size:12px;">
-      <span style="color:var(--text2);">${i+1}ª parcela — venc. ${vencFmt}</span>
-      <span style="font-weight:600;">R$ ${acFmt(valorParcela)}</span>
-    </div>`);
-    window._parcelas.push({ num: i+1, vencimento: vencFmt, valor: acFmt(valorParcela), intervDias });
+  // ── Preview da entrada ───────────────────────────────────────────────────
+  const entradaPreview = document.getElementById('ac-entrada-preview');
+  window._entrada = null;
+  if (entradaPreview) {
+    if (entradaVal > 0 && entradaDt) {
+      const dtFmt = new Date(entradaDt+'T00:00:00').toLocaleDateString('pt-BR');
+      entradaPreview.style.display = 'flex';
+      entradaPreview.style.justifyContent = 'space-between';
+      entradaPreview.style.padding = '5px 0';
+      entradaPreview.style.borderTop = '1px dashed var(--border)';
+      entradaPreview.innerHTML = `<span style="color:var(--accent);font-weight:600;">✓ Entrada — ${dtFmt}</span><span style="font-weight:700;color:var(--accent);">R$ ${acFmt(entradaVal)}</span>`;
+      window._entrada = { valor: acFmt(entradaVal), vencimento: dtFmt };
+    } else {
+      entradaPreview.style.display = 'none';
+    }
   }
-  linhas.push(`<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;font-weight:700;color:var(--accent);margin-top:2px;">
-    <span>Total (${n}x de R$ ${acFmt(valorParcela)})</span><span>R$ ${acFmt(total)}</span>
+
+  // ── Saldo restante após entrada ──────────────────────────────────────────
+  const saldo = Math.max(0, total - entradaVal);
+  window._parcelas = [];
+  const linhas = [];
+
+  if (n > 0) {
+    if (!venc1str) {
+      document.getElementById('ac-parcelas-preview').innerHTML =
+        '<span style="color:var(--text3);font-size:12px;">Informe a data da 1ª parcela.</span>';
+      return;
+    }
+    const valorParcela = saldo / n;
+    for (let i = 0; i < n; i++) {
+      const d = new Date(venc1str+'T00:00:00');
+      d.setDate(d.getDate() + intervDias * i);
+      const vencFmt = d.toLocaleDateString('pt-BR');
+      linhas.push(`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--border);font-size:12px;">
+        <span style="color:var(--text2);">${i+1}ª parcela — venc. ${vencFmt}</span>
+        <span style="font-weight:600;">R$ ${acFmt(valorParcela)}</span>
+      </div>`);
+      window._parcelas.push({ num: i+1, vencimento: vencFmt, valor: acFmt(valorParcela), intervDias });
+    }
+  }
+
+  // ── Resumo total ─────────────────────────────────────────────────────────
+  const parcelasStr = n > 0 ? `${n}x de R$ ${acFmt(saldo/n)}` : 'Sem parcelas';
+  const entradaStr  = entradaVal > 0 ? ` + entrada R$ ${acFmt(entradaVal)}` : '';
+  linhas.push(`<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;font-weight:700;color:var(--accent);margin-top:4px;border-top:1px solid var(--border);">
+    <span>${parcelasStr}${entradaStr}</span><span>Total: R$ ${acFmt(total)}</span>
   </div>`);
 
   const tipoLabel = tipo==='mensal'?'mensal':tipo==='quinzenal'?'quinzenal':tipo==='semanal'?'semanal':`a cada ${intervDias} dias`;
   const totEl = document.getElementById('ac-parcelas-total');
-  if (totEl) totEl.textContent = `Intervalo: ${tipoLabel}`;
+  if (totEl) totEl.textContent = n > 0 ? `Saldo após entrada: R$ ${acFmt(saldo)} — Intervalo: ${tipoLabel}` : '';
   document.getElementById('ac-parcelas-preview').innerHTML = linhas.join('');
 }
 
@@ -2109,17 +2151,39 @@ function gerarPreviewAcordo() {
     return `   ${i+1}. Pedido nº ${b.venda}${b.parcela&&vPrc!=='—'?' (Parc. '+vPrc+')':''} — Venc. original: ${vStr} — R$ ${vVal}`;
   }).join('\n');
 
-  // Forma de pagamento + parcelamento se boleto
-  const isBoleto = acFormaAtiva === 'Boleto bancário parcelado';
+  // Forma de pagamento + entrada + parcelamento
+  const isBoleto      = acFormaAtiva === 'Boleto bancário parcelado';
+  const isPromissoria = acFormaAtiva === 'Nota promissória';
+  const temParcels    = (isBoleto || isPromissoria) && window._parcelas && window._parcelas.length;
+  const tipo          = document.getElementById('ac-intervalo-tipo')?.value || 'mensal';
+  const tipoLabel2    = tipo==='mensal'?'mensal':tipo==='quinzenal'?'quinzenal':tipo==='semanal'?'semanal':`a cada ${window._parcelas?.[0]?.intervDias||30} dias`;
+
   let blocoForma = `   ${acFormaAtiva}`;
-  if (isBoleto && window._parcelas && window._parcelas.length) {
-    const n = window._parcelas.length;
-    const linhasParcelas = window._parcelas.map(p =>
-      `   Parcela ${p.num}/${n} — R$ ${p.valor} — Vencimento: ${p.vencimento}`
-    ).join('\n');
-    blocoForma = `   Boleto bancário — ${n}x de R$ ${window._parcelas[0].valor}\n${linhasParcelas}`;
+
+  if (isBoleto || isPromissoria) {
+    const tipoNome2 = isBoleto ? 'Boleto bancário' : 'Nota promissória';
+    const n2 = window._parcelas ? window._parcelas.length : 0;
+    const linhas2 = [];
+
+    // Linha de entrada
+    if (window._entrada && window._entrada.valor) {
+      linhas2.push(`   ► Entrada: R$ ${window._entrada.valor} — Vencimento: ${window._entrada.vencimento}`);
+    }
+
+    // Linhas de parcelas
+    if (n2 > 0) {
+      window._parcelas.forEach(p => {
+        linhas2.push(`   ${p.num}ª ${isBoleto ? 'parcela' : 'promissória'} (${p.num}/${n2}) — R$ ${p.valor} — Vencimento: ${p.vencimento}`);
+      });
+    }
+
+    // Descrição resumo
+    const entradaDesc2 = window._entrada ? ` com entrada de R$ ${window._entrada.valor}` : '';
+    const parcsDesc2   = n2 > 0 ? ` — ${n2}x de R$ ${window._parcelas[0].valor} (${tipoLabel2})` : '';
+    blocoForma = "   " + tipoNome2 + entradaDesc2 + parcsDesc2 + "\n\n" + linhas2.join("\n");
   }
-  if (obs) blocoForma += `\n\n   Obs.: ${obs}`;
+
+  if (obs) blocoForma += "\n\n   Obs.: " + obs;
 
   const numAcordo = window._acordoNumero || `${new Date().getFullYear()}/???`;
 
@@ -2281,13 +2345,21 @@ function imprimirAcordo() {
   if (temParcelas) {
     const n        = window._parcelas.length;
     const tipoNome = isBoleto ? 'Boleto bancário' : 'Nota promissória';
+    const entradaRow = window._entrada
+      ? `<tr style="background:#f0f7f2;"><td><strong>Entrada</strong></td><td>${window._entrada.vencimento}</td><td style="text-align:right;font-weight:700;color:#1a5c38;">R$ ${window._entrada.valor}</td></tr>`
+      : '';
     const parcsHTML = window._parcelas.map(p =>
       `<tr><td>${p.num}ª ${isBoleto?'parcela':'promissória'}</td><td>${p.vencimento}</td><td style="text-align:right;font-weight:600;">R$ ${p.valor}</td></tr>`
     ).join('');
-    formaHTML = `<p>${tipoNome} — <strong>${n}x de R$ ${window._parcelas[0].valor}</strong> (intervalo ${tipoLabel}), com os seguintes vencimentos:</p>
-    <table style="width:70%;margin:8px 0 4px 0;">
+    const entradaDesc = window._entrada ? ` com entrada de R$ ${window._entrada.valor}` : '';
+    const parcsDesc   = n > 0 ? ` — ${n}x de R$ ${window._parcelas[0]?.valor} (${tipoLabel})` : '';
+    formaHTML = `<p>${tipoNome}${entradaDesc}${parcsDesc}:</p>
+    <table style="width:75%;margin:8px 0 4px 0;">
       <thead><tr><th style="text-align:left;">Título</th><th style="text-align:left;">Vencimento</th><th style="text-align:right;">Valor</th></tr></thead>
-      <tbody>${parcsHTML}</tbody>
+      <tbody>${entradaRow}${parcsHTML}</tbody>
+      <tr style="font-weight:bold;background:#f0f7f2;border-top:2px solid #1a5c38;">
+        <td colspan="2">Total</td><td style="text-align:right;">R$ ${numAcordo ? acFmt(c.totalFinal||0) : ''}</td>
+      </tr>
     </table>`;
   } else {
     formaHTML = `<p>${acFormaAtiva || '[FORMA NÃO DEFINIDA]'}</p>`;
@@ -2347,6 +2419,12 @@ function imprimirAcordo() {
 <html lang="pt-BR"><head>
 <meta charset="UTF-8">
 <title>Confissão de Dívida — Explosão Alimentos</title>
+<style>
+  /* Suprime URL e título na impressão (Chrome/Edge) */
+  @media print {
+    @page { margin-top: 1.6cm; }
+  }
+</style>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -2455,12 +2533,45 @@ function imprimirAcordo() {
   .rodape { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 6px;
     font-size: 8.5px; color: #aaa; text-align: center; }
 
+  /* Rodapé fixo impresso em todas as páginas */
+  .rodape-paginas {
+    display: none; /* esconde na tela */
+  }
+
   @media print {
-    body { padding: 0; }
-    @page { size: A4; margin: 1.8cm 2cm; }
+    /* Suprime URL "about:blank" e título da janela no cabeçalho de impressão */
+    @page {
+      size: A4;
+      margin: 1.6cm 2cm 1.2cm 2cm;
+    }
+
+    body { padding: 0; margin: 0; }
+
+    .rodape-paginas {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0.8cm;           /* altura compacta */
+      border-top: 0.6pt solid #bbb;
+      padding: 0 16pt;
+      font-family: Arial, sans-serif;
+      font-size: 7pt;
+      color: #999;
+      background: white;
+    }
   }
 </style>
 </head><body>
+
+<!-- RODAPÉ FIXO EM TODAS AS PÁGINAS -->
+<div class="rodape-paginas">
+  <span>Acordo nº ${numAcordo} &nbsp;·&nbsp; ${nome} &nbsp;·&nbsp; CPF/CNPJ: ${cpf}</span>
+  <span>Produtos Alimentícios Explosão LTDA — CNPJ 01.121.126/0001-87</span>
+</div>
 
 <!-- CABEÇALHO -->
 <div class="topo">
@@ -2557,7 +2668,9 @@ function imprimirAcordo() {
   </ol>
 </div>
 
-<!-- CLÁUSULA 7 -->
+<!-- CLÁUSULA 7 + FECHO + ASSINATURAS — bloco único para não quebrar sozinho -->
+<div style="page-break-inside:avoid; break-inside:avoid;">
+
 <div class="clausula">
   <div class="clausula-titulo">Cláusula 7ª — Do Foro</div>
   <p>As partes elegem o Foro da <strong>Comarca de Trindade, Estado de Goiás</strong>, para dirimir quaisquer litígios oriundos do presente instrumento, com expressa renúncia a qualquer outro, por mais privilegiado que seja.</p>
@@ -2594,6 +2707,8 @@ function imprimirAcordo() {
   </div>
 </div>
 
+</div><!-- fim bloco clausula7+assinaturas -->
+
 <div class="rodape">
   Produtos Alimentícios Explosão LTDA &nbsp;·&nbsp; CNPJ 01.121.126/0001-87 &nbsp;·&nbsp; Trindade, Goiás &nbsp;·&nbsp; Gerado em ${dataGer}
 </div>
@@ -2621,10 +2736,15 @@ async function confirmarAcordo() {
   // Monta detalhe do parcelamento se boleto
   const isBoleto = acFormaAtiva === 'Boleto bancário parcelado';
   let detalheParc = '';
-  if (isBoleto && window._parcelas && window._parcelas.length) {
+  if ((isBoleto || isPromissoria) && window._parcelas && window._parcelas.length) {
     const n = window._parcelas.length;
-    detalheParc = ` | Parcelamento: ${n}x de R$ ${window._parcelas[0].valor} | Vencimentos: ` +
+    const entradaLog = window._entrada
+      ? ` | Entrada: R$ ${window._entrada.valor} em ${window._entrada.vencimento}` : '';
+    detalheParc = entradaLog +
+      ` | Parcelas: ${n}x de R$ ${window._parcelas[0].valor} | Vencimentos: ` +
       window._parcelas.map(p=>`${p.num}ª ${p.vencimento}`).join(', ');
+  } else if (window._entrada && window._entrada.valor !== '0,00') {
+    detalheParc = ` | Entrada: R$ ${window._entrada.valor} em ${window._entrada.vencimento} | Sem parcelas adicionais`;
   }
 
   const dadosCli = `CPF/CNPJ: ${document.getElementById('ac-cpf').value} | End: ${document.getElementById('ac-endereco').value} | Tel: ${document.getElementById('ac-fone').value}`;
@@ -2742,11 +2862,32 @@ let _acordoModalInited = false;
       <!-- Painel de parcelamento — Boleto OU Promissória -->
       <div id="ac-boleto-painel" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
         <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.4px;" id="ac-painel-titulo">Parcelamento</div>
+
+        <!-- Entrada -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.4px;">💰 Entrada</div>
+          <div class="form-row" style="margin-bottom:0;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Valor da entrada (R$) <span style="color:var(--text3);font-weight:400;">— coloque 0 se não houver</span></label>
+              <input type="number" id="ac-entrada-valor" value="0" min="0" step="0.01"
+                oninput="calcParcelas()" placeholder="0,00" />
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Data da entrada</label>
+              <input type="date" id="ac-entrada-data" onchange="calcParcelas()" />
+            </div>
+          </div>
+          <div id="ac-entrada-preview" style="font-size:12px;margin-top:8px;display:none;"></div>
+        </div>
+
+        <!-- Parcelas do saldo restante -->
+        <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.4px;">📋 Parcelas do saldo restante</div>
         <div class="form-row">
           <div class="form-group">
             <label>Nº de parcelas</label>
             <select id="ac-num-parcelas" onchange="calcParcelas()">
-              <option value="1">1x (à vista)</option>
+              <option value="0">Sem parcelas (só entrada)</option>
+              <option value="1">1x</option>
               <option value="2">2x</option>
               <option value="3" selected>3x</option>
               <option value="4">4x</option>
@@ -2762,7 +2903,7 @@ let _acordoModalInited = false;
             <input type="date" id="ac-venc-1parc" onchange="calcParcelas()" />
           </div>
         </div>
-        <div class="form-row">
+        <div class="form-row" id="ac-intervalo-row">
           <div class="form-group">
             <label>Intervalo entre parcelas</label>
             <div style="display:flex;gap:8px;align-items:center;">
