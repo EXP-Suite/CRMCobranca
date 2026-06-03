@@ -104,22 +104,22 @@
   .th-filter { padding: 4px 6px 6px; }
   .th-filter select, .th-filter input { width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; background: var(--surface); color: var(--text); outline: none; }
   .th-filter select:focus, .th-filter input:focus { border-color: var(--accent); }
-  .col-nome { width: 19%; }
+  .col-nome { width: 16%; }
   .col-venda { width: 6%; }
   .col-parc { width: 5%; }
-  .col-valor { width: 9%; text-align: right; }
+  .col-valor { width: 8%; text-align: right; }
   .col-venc { width: 9%; }
   .col-status { width: 9%; }
   .col-serasa { width: 6%; text-align: center; }
   .col-prox { width: 8%; }
   .col-ult { width: 13%; }
-  .col-acao { width: 16%; text-align: center; white-space: nowrap; }
+  .col-acao { width: 20%; text-align: center; white-space: nowrap; }
   .valor-cell { font-weight: 600; color: var(--text); text-align: right; }
   .nome-cell { font-weight: 500; }
   .ult-cell { font-size: 12px; color: var(--text2); }
-  .btn-acao { padding: 4px 10px; font-size: 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; }
+  .btn-acao { padding: 3px 7px; font-size: 11px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; }
   .btn-acao:hover { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
-  .btn-wa { padding: 4px 10px; font-size: 12px; border: 1px solid #25d366; border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; color: #128c42; }
+  .btn-wa { padding: 3px 7px; font-size: 11px; border: 1px solid #25d366; border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; color: #128c42; }
   .btn-wa:hover { background: #e8faf0; }
 
   /* Badge */
@@ -225,7 +225,7 @@
   .separador-pago td { background: var(--surface2) !important; font-size: 11px; color: var(--text3); text-align: center; padding: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); border-top: 2px solid var(--border2); }
 
   /* Botão pago rápido */
-  .btn-pago { padding: 4px 10px; font-size: 12px; border: 1px solid #25d366; border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; color: #128c42; font-weight: 500; }
+  .btn-pago { padding: 3px 7px; font-size: 11px; border: 1px solid #25d366; border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; color: #128c42; font-weight: 500; }
   .btn-pago:hover { background: #e8faf0; }
 
   /* Empty state */
@@ -344,6 +344,54 @@
   .b-acordo            { background:#f0eefe; color:#3c2e8a; }
   .b-acordo-realizado  { background:var(--accent-bg); color:var(--accent-text); }
   @media(max-width:768px){ .modal-acordo{width:100%!important;} .forma-grid{grid-template-columns:1fr;} }
+
+  /* ── CONCILIAÇÃO ────────────────────────────────────────────── */
+  .modal-concil { width: 860px; }
+  .concil-resumo { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .concil-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; text-align: center; }
+  .concil-card-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+  .concil-card-val { font-size: 22px; font-weight: 700; color: var(--text); line-height: 1; }
+  .concil-card-val.ok   { color: var(--accent); }
+  .concil-card-val.warn { color: #f0a500; }
+  .concil-card-val.err  { color: var(--danger); }
+  .concil-secao { margin-bottom: 14px; }
+  .concil-secao-title { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 5px; border-bottom: 1px solid var(--border); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .concil-secao-title .badge-cnt { background: var(--danger); color: #fff; border-radius: 20px; padding: 1px 8px; font-size: 11px; font-weight: 700; }
+  .concil-secao-title .badge-cnt.ok { background: var(--accent); }
+  .concil-secao-title .badge-cnt.warn { background: #f0a500; }
+  .concil-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .concil-table th { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; padding: 4px 8px; background: var(--surface2); border-bottom: 1px solid var(--border); text-align: left; }
+  .concil-table td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .concil-table tr:last-child td { border-bottom: none; }
+  .concil-table tr:hover td { background: var(--bg); }
+  .diff-pos { color: var(--danger); font-weight: 600; }
+  .diff-neg { color: var(--accent); font-weight: 600; }
+  .concil-empty { text-align: center; color: var(--text3); padding: 12px; font-size: 12px; }
+  @media(max-width:768px){ .modal-concil{width:100%!important;} .concil-resumo{grid-template-columns:1fr 1fr;} }
+
+  /* ── ALTERAR VENCIMENTO ─────────────────────────────────────── */
+  .modal-venc { width: 420px; }
+  .venc-dados { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 14px; }
+  .venc-dados-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .venc-dados-row:last-child { border-bottom: none; }
+  .venc-dados-row .vd-label { color: var(--text2); }
+  .venc-dados-row .vd-val { font-weight: 500; }
+  .venc-atual-destaque { color: var(--danger); font-weight: 700 !important; }
+
+  /* ── ATUALIZAÇÃO EM MASSA (aba do modal-add) ────────────────── */
+  .tab-atualizar { padding: 4px 12px; font-size: 13px; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: var(--text2); font-weight: 500; margin-bottom: -1px; }
+  .tab-atualizar.active { color: #7c3aed; border-bottom-color: #7c3aed; }
+  #tab-content-atualizar { display: none; }
+  #tab-content-atualizar.active { display: block; }
+  #tab-content-importar { display: block; }
+  #tab-content-importar.active { display: block; }
+  .update-result { margin-top: 10px; background: var(--accent-bg); border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 13px; display: none; }
+  .update-result.show { display: block; }
+  .update-result.warn { background: var(--warn-bg); border-color: #f0d060; }
+  .update-stat { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 6px; }
+  .update-stat-item { font-size: 13px; }
+  .update-stat-item strong { font-size: 18px; font-weight: 700; }
+  .update-nao-encontrados { margin-top: 6px; font-size: 12px; color: var(--danger); }
 </style>
 </head>
 <body>
@@ -354,6 +402,7 @@
     <span id="sync-status" style="font-size:12px;color:var(--text3);"></span>
     <button class="btn" onclick="abrirResumoPorCliente()" title="Ver agrupado por cliente">👤 Por cliente</button>
     <button class="btn" onclick="abrirRelatorio()" title="Relatório de inadimplência">📊 Relatório</button>
+    <button class="btn" onclick="abrirConciliacao()" style="border-color:#c0392b;color:#c0392b;" title="Conciliar CRM x Fácil123">⚖️ Conciliar</button>
     <button class="btn" onclick="abrirAcordos()" style="border-color:#7c3aed;color:#5b21b6;" title="Formalizar acordo com cliente">🤝 Acordos</button>
     <button class="btn" onclick="abrirBaixaPagamentos()" style="border-color:#25d366;color:#128c42;">✓ Baixar pagamentos</button>
     <button class="btn btn-primary" onclick="abrirAddBoleto()">+ Adicionar boletos</button>
@@ -553,7 +602,7 @@
 
 <!-- Modal adicionar boletos -->
 <div class="overlay" id="modal-add">
-  <div class="modal modal-add">
+  <div class="modal modal-add" style="width:520px;">
     <div class="modal-header">
       <div>
         <div class="modal-title">Adicionar boletos</div>
@@ -561,25 +610,165 @@
       </div>
       <button class="btn-close" onclick="fecharModal('modal-add')">×</button>
     </div>
+    <!-- Abas internas -->
+    <div class="tabs" style="margin-bottom:1rem;">
+      <button class="tab active" id="tab-btn-importar" onclick="setTabAdd('importar')">➕ Importar boletos</button>
+      <button class="tab tab-atualizar" id="tab-btn-atualizar" onclick="setTabAdd('atualizar')">🔄 Atualizar vencimentos / valores</button>
+    </div>
+
+    <!-- Aba: Importar (conteúdo original) -->
+    <div id="tab-content-importar">
+      <div class="form-group">
+        <label>Colar dados do Fácil123 — selecione e cole o bloco completo da tela</label>
+        <textarea id="add-paste" rows="8" placeholder="27/04&#9;Receitas: Vendas&#10;ELIAS MARTINS RESENDE * Venda 43705 * 1/3&#10;1.001,50&#10;27/04&#9;Receitas: Vendas&#10;ISA COMERCIO * Venda 43747 * 1/3&#10;483,20"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+        <span style="font-size:12px;color:var(--text3);">ou preencha manualmente</span>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Nome do cliente</label><input type="text" id="add-nome" /></div>
+        <div class="form-group"><label>Nº da venda</label><input type="text" id="add-venda" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Parcela (ex: 1/3)</label><input type="text" id="add-parcela" /></div>
+        <div class="form-group"><label>Valor (R$)</label><input type="text" id="add-valor" placeholder="1.250,00" /></div>
+      </div>
+      <div class="form-group"><label>Data de vencimento</label><input type="date" id="add-venc" /></div>
+      <button id="btn-salvar-boletos" class="btn btn-primary" style="width:100%;padding:10px;margin-top:4px;" onclick="salvarBoletos()">Salvar na planilha</button>
+    </div>
+
+    <!-- Aba: Atualizar em massa -->
+    <div id="tab-content-atualizar" style="display:none;">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+        Cole o mesmo bloco do Fácil123. O sistema vai <strong>comparar</strong> com os boletos já cadastrados e atualizar apenas os que tiverem <strong>vencimento ou valor diferente</strong>. Boletos novos são ignorados.
+      </p>
+      <div class="form-group">
+        <label>Colar dados do Fácil123 — mesmo formato da importação</label>
+        <textarea id="update-paste" rows="8" placeholder="27/04&#9;Receitas: Vendas&#10;ELIAS MARTINS RESENDE * Venda 43705 * 1/3&#10;1.001,50&#10;..."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="btn" style="flex:1;" onclick="document.getElementById('update-paste').value='';document.getElementById('update-result').classList.remove('show');">Limpar</button>
+        <button id="btn-atualizar-massa" class="btn btn-primary" style="flex:2;padding:10px;background:#7c3aed;border-color:#7c3aed;" onclick="atualizarBoletosMassa()">⚡ Atualizar em massa</button>
+      </div>
+      <div id="update-result" class="update-result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Conciliação CRM x Fácil123 -->
+<div class="overlay" id="modal-concil">
+  <div class="modal modal-concil">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">⚖️ Conciliação — CRM × Fácil123</div>
+        <div class="modal-sub">Cole os boletos a receber do Fácil123 para comparar com o CRM</div>
+      </div>
+      <button class="btn-close" onclick="fecharModal('modal-concil')">×</button>
+    </div>
+
+    <!-- Passo 1: entrada dos dados -->
+    <div id="concil-step-entrada">
+
+      <!-- Filtro de período -->
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Período a conciliar — deve ser o mesmo filtro usado no Fácil123</label>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;align-items:center;">
+          <button class="btn-periodo" id="cp-hoje"   onclick="setConcilPeriodo('hoje')">Hoje</button>
+          <button class="btn-periodo" id="cp-semana" onclick="setConcilPeriodo('semana')">Semana</button>
+          <button class="btn-periodo" id="cp-mes-prev" onclick="navConcilMes(-1)" style="border-radius:4px 0 0 4px;padding:3px 7px;border-right:none;">‹</button>
+          <button class="btn-periodo active" id="cp-mes" onclick="setConcilPeriodo('mes')" style="border-radius:0;border-right:none;border-left:none;">Mês</button>
+          <button class="btn-periodo" id="cp-mes-next" onclick="navConcilMes(+1)" style="border-radius:0 4px 4px 0;padding:3px 7px;">›</button>
+          <button class="btn-periodo" id="cp-custom" onclick="setConcilPeriodo('custom')">Personalizado</button>
+          <button class="btn-periodo" id="cp-tudo"   onclick="setConcilPeriodo('tudo')">Tudo</button>
+        </div>
+        <div id="concil-periodo-custom" style="display:none;gap:6px;margin-top:6px;align-items:center;">
+          <input type="date" id="cp-de"  style="padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;" />
+          <span style="font-size:12px;color:var(--text3);">até</span>
+          <input type="date" id="cp-ate" style="padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;" />
+        </div>
+        <div id="concil-periodo-label" style="font-size:12px;color:var(--text2);margin-top:5px;"></div>
+      </div>
+
+      <div class="form-group">
+        <label>Cole os dados do Fácil123 — boletos a receber do mesmo período acima</label>
+        <textarea id="concil-paste" rows="7"
+          placeholder="27/04&#9;Receitas: Vendas&#10;ELIAS MARTINS RESENDE * Venda 43705 * 1/3&#10;1.001,50&#10;27/04&#9;Receitas: Vendas&#10;ISA COMERCIO * Venda 43747 * 1/3&#10;483,20&#10;..."></textarea>
+        <small style="color:var(--text3);">Selecione todos os boletos pendentes do período no Fácil123, copie e cole aqui.</small>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" style="flex:1;" onclick="fecharModal('modal-concil')">Cancelar</button>
+        <button class="btn btn-primary" style="flex:2;padding:10px;background:#c0392b;border-color:#c0392b;" onclick="executarConciliacao()">⚖️ Conciliar agora</button>
+      </div>
+    </div>
+
+    <!-- Passo 2: resultado -->
+    <div id="concil-step-resultado" style="display:none;">
+      <div id="concil-periodo-resultado" style="font-size:12px;color:var(--text2);margin-bottom:10px;padding:6px 10px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border);"></div>
+
+      <!-- Cards de resumo -->
+      <div class="concil-resumo" id="concil-cards"></div>
+
+      <!-- Seção 1: valores diferentes -->
+      <div class="concil-secao">
+        <div class="concil-secao-title">
+          💰 Valores divergentes (mesmo boleto, valor diferente)
+          <span class="badge-cnt warn" id="concil-cnt-valor">0</span>
+        </div>
+        <div id="concil-lista-valor"></div>
+      </div>
+
+      <!-- Seção 2: só no CRM -->
+      <div class="concil-secao">
+        <div class="concil-secao-title">
+          🔴 Só no CRM — não encontrados no Fácil123 (possível boleto já pago/cancelado lá)
+          <span class="badge-cnt" id="concil-cnt-socrm">0</span>
+        </div>
+        <div id="concil-lista-socrm"></div>
+      </div>
+
+      <!-- Seção 3: só no Fácil -->
+      <div class="concil-secao">
+        <div class="concil-secao-title">
+          🟡 Só no Fácil123 — não encontrados no CRM (falta importar)
+          <span class="badge-cnt warn" id="concil-cnt-sofacil">0</span>
+        </div>
+        <div id="concil-lista-sofacil"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn" style="flex:1;" onclick="resetConciliacao()">← Nova conciliação</button>
+        <button class="btn" style="flex:1;" onclick="fecharModal('modal-concil')">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Alterar Vencimento -->
+<div class="overlay" id="modal-venc">
+  <div class="modal modal-venc">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📅 Alterar Vencimento</div>
+        <div class="modal-sub" id="modal-venc-sub">Atualize a data de vencimento deste boleto</div>
+      </div>
+      <button class="btn-close" onclick="fecharModal('modal-venc')">×</button>
+    </div>
+    <div class="venc-dados">
+      <div class="venc-dados-row"><span class="vd-label">Cliente</span><span class="vd-val" id="vd-nome">—</span></div>
+      <div class="venc-dados-row"><span class="vd-label">Venda / Parcela</span><span class="vd-val" id="vd-venda">—</span></div>
+      <div class="venc-dados-row"><span class="vd-label">Valor</span><span class="vd-val" id="vd-valor">—</span></div>
+      <div class="venc-dados-row"><span class="vd-label">Vencimento atual</span><span class="vd-val venc-atual-destaque" id="vd-venc-atual">—</span></div>
+    </div>
     <div class="form-group">
-      <label>Colar dados do Fácil123 — selecione e cole o bloco completo da tela</label>
-      <textarea id="add-paste" rows="8" placeholder="27/04	Receitas: Vendas&#10;ELIAS MARTINS RESENDE * Venda 43705 * 1/3&#10;1.001,50&#10;27/04	Receitas: Vendas&#10;ISA COMERCIO * Venda 43747 * 1/3&#10;483,20"></textarea>
+      <label>Nova data de vencimento</label>
+      <input type="date" id="venc-nova-data" />
     </div>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
-      <div style="flex:1;height:1px;background:var(--border);"></div>
-      <span style="font-size:12px;color:var(--text3);">ou preencha manualmente</span>
-      <div style="flex:1;height:1px;background:var(--border);"></div>
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="btn" style="flex:1;" onclick="fecharModal('modal-venc')">Cancelar</button>
+      <button id="btn-salvar-vencimento" class="btn btn-primary" style="flex:2;padding:10px;" onclick="salvarNovoVencimento()">✓ Salvar novo vencimento</button>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Nome do cliente</label><input type="text" id="add-nome" /></div>
-      <div class="form-group"><label>Nº da venda</label><input type="text" id="add-venda" /></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Parcela (ex: 1/3)</label><input type="text" id="add-parcela" /></div>
-      <div class="form-group"><label>Valor (R$)</label><input type="text" id="add-valor" placeholder="1.250,00" /></div>
-    </div>
-    <div class="form-group"><label>Data de vencimento</label><input type="date" id="add-venc" /></div>
-    <button id="btn-salvar-boletos" class="btn btn-primary" style="width:100%;padding:10px;margin-top:4px;" onclick="salvarBoletos()">Salvar na planilha</button>
   </div>
 </div>
 
@@ -677,7 +866,388 @@ window.onload = () => {
   carregarDados();
 };
 
-// ─── GOOGLE APPS SCRIPT CALLS ─────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// ██ NOVAS FUNÇÕES v2.0 — ALTERAR VENCIMENTO ÚNICO + ATUALIZAÇÃO EM MASSA ██
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── CONTROLE DE ABAS DO MODAL-ADD ──────────────────────────────────────────
+function setTabAdd(aba) {
+  const conteudos = { importar: 'tab-content-importar', atualizar: 'tab-content-atualizar' };
+  const botoes    = { importar: 'tab-btn-importar',     atualizar: 'tab-btn-atualizar'     };
+  Object.keys(conteudos).forEach(k => {
+    document.getElementById(conteudos[k]).style.display = k === aba ? 'block' : 'none';
+    document.getElementById(botoes[k]).classList.toggle('active', k === aba);
+  });
+}
+
+// ─── ABRIR MODAL ALTERAR VENCIMENTO ─────────────────────────────────────────
+let boletoParaAlterar = null;
+
+function abrirAlterarVencimento(id) {
+  const b = boletos.find(b => b.id === id);
+  if (!b) { notify('Boleto não encontrado.'); return; }
+  boletoParaAlterar = b;
+
+  const parcStr = normalizarParcela(b.parcela);
+  document.getElementById('vd-nome').textContent        = b.nome;
+  document.getElementById('vd-venda').textContent       = 'Venda ' + b.venda + (parcStr !== '—' ? ' · ' + parcStr : '');
+  document.getElementById('vd-valor').textContent       = 'R$ ' + normalizarValor(b.valor);
+  document.getElementById('vd-venc-atual').textContent  = normalizarData(b.vencimento);
+
+  // Pré-preenche o input com a data atual do boleto (formato YYYY-MM-DD para o input date)
+  const vencAtual = normalizarData(b.vencimento);
+  if (vencAtual && vencAtual !== '—') {
+    const [d, m, y] = vencAtual.split('/');
+    document.getElementById('venc-nova-data').value = `${y}-${m}-${d}`;
+  } else {
+    document.getElementById('venc-nova-data').value = '';
+  }
+
+  document.getElementById('modal-venc').classList.add('open');
+}
+
+// ─── SALVAR NOVO VENCIMENTO (BOLETO ÚNICO) ───────────────────────────────────
+async function salvarNovoVencimento() {
+  if (!boletoParaAlterar) return;
+  const novaDataInput = document.getElementById('venc-nova-data').value;
+  if (!novaDataInput) { notify('Selecione a nova data de vencimento.'); return; }
+
+  // Converte de YYYY-MM-DD para DD/MM/YYYY
+  const [y, m, d] = novaDataInput.split('-');
+  const novaData = `${d}/${m}/${y}`;
+
+  const vencAtual = normalizarData(boletoParaAlterar.vencimento);
+  if (novaData === vencAtual) { notify('A data informada é igual à atual.'); return; }
+
+  const r = await gsCall({
+    action: 'updateVencimento',
+    boletoId: boletoParaAlterar.id,
+    novaData
+  });
+  if (!r) return;
+
+  if (r.ok) {
+    notify(`📅 Vencimento atualizado: ${r.dataAnterior} → ${r.dataNova}`);
+    fecharModal('modal-venc');
+    boletoParaAlterar = null;
+    await carregarDados();
+  } else {
+    notify('Erro: ' + (r.error || 'Falha ao atualizar.'));
+  }
+}
+
+// ─── ATUALIZAÇÃO EM MASSA ────────────────────────────────────────────────────
+async function atualizarBoletosMassa() {
+  const paste = document.getElementById('update-paste').value.trim();
+  if (!paste) { notify('Cole os dados do Fácil123 primeiro.'); return; }
+
+  // Reutiliza o mesmo parser da importação
+  const parsed = parseBlocoFacil123(paste);
+  if (parsed.length === 0) { notify('Nenhum boleto reconhecido. Verifique o formato.'); return; }
+
+  const r = await gsCall({ action: 'updateBoletosMassa', boletos: parsed });
+  if (!r) return;
+
+  const res = document.getElementById('update-result');
+
+  if (r.ok) {
+    const { alterados, semAlteracao, naoLocalizados, processados } = r.resumo;
+    let html = `<div class="update-stat">
+      <div class="update-stat-item"><strong>${processados}</strong><br>processados</div>
+      <div class="update-stat-item" style="color:var(--accent);"><strong>${alterados}</strong><br>atualizados</div>
+      <div class="update-stat-item" style="color:var(--text2);"><strong>${semAlteracao}</strong><br>sem mudança</div>`;
+    if (naoLocalizados > 0) {
+      html += `<div class="update-stat-item" style="color:var(--danger);"><strong>${naoLocalizados}</strong><br>não encontrados</div>`;
+    }
+    html += `</div>`;
+
+    if (r.atualizados && r.atualizados.length > 0) {
+      html += `<div style="margin-top:6px;font-size:12px;color:var(--text2);">`;
+      r.atualizados.forEach(item => {
+        html += `<div style="padding:3px 0;border-bottom:1px solid var(--border);">
+          <strong>${item.venda}${item.parcela ? ' · ' + item.parcela : ''}</strong> — ${item.alteracoes.join(' | ')}
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    if (r.naoEncontrados && r.naoEncontrados.length > 0) {
+      html += `<div class="update-nao-encontrados">Não localizados: ${r.naoEncontrados.join(', ')}</div>`;
+    }
+
+    res.innerHTML = html;
+    res.className = 'update-result show' + (naoLocalizados > 0 ? ' warn' : '');
+
+    if (alterados > 0) await carregarDados();
+  } else {
+    res.innerHTML = '❌ Erro: ' + (r.error || 'Falha ao atualizar.');
+    res.className = 'update-result show warn';
+  }
+}
+
+
+
+// ─── CONCILIAÇÃO CRM × FÁCIL123 ─────────────────────────────────────────────
+
+let concilPeriodo = 'mes';
+let concilMesOffset = 0;
+
+function abrirConciliacao() {
+  resetConciliacao();
+  // Sincroniza o mês com o período ativo na tela principal
+  concilMesOffset = typeof mesOffset !== 'undefined' ? mesOffset : 0;
+  concilPeriodo   = typeof periodoAtivo !== 'undefined' ? periodoAtivo : 'mes';
+  setConcilPeriodo(concilPeriodo);
+  document.getElementById('modal-concil').classList.add('open');
+}
+
+function resetConciliacao() {
+  document.getElementById('concil-paste').value = '';
+  document.getElementById('concil-step-entrada').style.display   = 'block';
+  document.getElementById('concil-step-resultado').style.display = 'none';
+}
+
+function navConcilMes(delta) {
+  concilMesOffset += delta;
+  setConcilPeriodo('mes');
+}
+
+function setConcilPeriodo(p) {
+  if (p !== 'mes') concilMesOffset = 0;
+  concilPeriodo = p;
+  ['hoje','semana','mes','custom','tudo'].forEach(x => {
+    const el = document.getElementById('cp-' + x);
+    if (el) el.classList.toggle('active', x === p);
+  });
+  const prev = document.getElementById('cp-mes-prev');
+  const next = document.getElementById('cp-mes-next');
+  if (prev) prev.classList.toggle('active', p === 'mes');
+  if (next) next.classList.toggle('active', p === 'mes');
+  document.getElementById('concil-periodo-custom').style.display = p === 'custom' ? 'flex' : 'none';
+
+  // Atualiza label informativo
+  const label = getConcilPeriodoLabel();
+  document.getElementById('concil-periodo-label').textContent = label ? '📅 ' + label : '';
+
+  // Atualiza texto do botão mês
+  if (p === 'mes') {
+    const hoje = new Date();
+    const ref  = new Date(hoje.getFullYear(), hoje.getMonth() + concilMesOffset, 1);
+    const btnMes = document.getElementById('cp-mes');
+    if (btnMes) btnMes.textContent = ref.toLocaleDateString('pt-BR', {month:'short', year:'2-digit'})
+      .replace('.','').replace(' de ','/');
+  }
+}
+
+function getConcilPeriodoLabel() {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  if (concilPeriodo === 'hoje')  return 'Hoje — ' + hoje.toLocaleDateString('pt-BR');
+  if (concilPeriodo === 'semana') {
+    const ate = new Date(hoje); ate.setDate(ate.getDate() + 6);
+    return 'Semana — ' + hoje.toLocaleDateString('pt-BR') + ' a ' + ate.toLocaleDateString('pt-BR');
+  }
+  if (concilPeriodo === 'mes') {
+    const ref = new Date(hoje.getFullYear(), hoje.getMonth() + concilMesOffset, 1);
+    return ref.toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+  }
+  if (concilPeriodo === 'custom') {
+    const de  = document.getElementById('cp-de')  ? document.getElementById('cp-de').value  : '';
+    const ate = document.getElementById('cp-ate') ? document.getElementById('cp-ate').value : '';
+    if (de && ate) {
+      const dDe  = new Date(de  + 'T00:00:00');
+      const dAte = new Date(ate + 'T00:00:00');
+      return dDe.toLocaleDateString('pt-BR') + ' a ' + dAte.toLocaleDateString('pt-BR');
+    }
+    return 'Personalizado (defina as datas)';
+  }
+  if (concilPeriodo === 'tudo') return 'Toda a base (sem filtro de data)';
+  return '';
+}
+
+function getConcilIntervalo() {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  if (concilPeriodo === 'hoje')  return { de: new Date(hoje), ate: new Date(hoje) };
+  if (concilPeriodo === 'semana') {
+    const ate = new Date(hoje); ate.setDate(ate.getDate() + 6);
+    return { de: hoje, ate };
+  }
+  if (concilPeriodo === 'mes') {
+    const ref = new Date(hoje.getFullYear(), hoje.getMonth() + concilMesOffset, 1);
+    return { de: new Date(ref.getFullYear(), ref.getMonth(), 1),
+             ate: new Date(ref.getFullYear(), ref.getMonth() + 1, 0) };
+  }
+  if (concilPeriodo === 'custom') {
+    const vDe  = document.getElementById('cp-de').value;
+    const vAte = document.getElementById('cp-ate').value;
+    if (!vDe || !vAte) return null;
+    return { de: new Date(vDe + 'T00:00:00'), ate: new Date(vAte + 'T00:00:00') };
+  }
+  return null; // tudo — sem filtro de data
+}
+
+function executarConciliacao() {
+  const paste = document.getElementById('concil-paste').value.trim();
+  if (!paste) { notify('Cole os dados do Fácil123 primeiro.'); return; }
+
+  if (concilPeriodo === 'custom') {
+    const vDe  = document.getElementById('cp-de').value;
+    const vAte = document.getElementById('cp-ate').value;
+    if (!vDe || !vAte) { notify('Defina o período personalizado (data de e até).'); return; }
+  }
+
+  // 1. Parsear dados do Fácil123
+  const facil = parseBlocoFacil123(paste);
+  if (facil.length === 0) { notify('Nenhum boleto reconhecido. Verifique o formato.'); return; }
+
+  // 2. Filtrar CRM pelo período selecionado (apenas pendentes)
+  const intervalo = getConcilIntervalo();
+  const toDate = b => {
+    const d = normalizarData(b.vencimento);
+    if (!d || d === '—') return null;
+    const p = d.split('/');
+    return new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
+  };
+  const crm = boletos.filter(b => {
+    if (b.status === 'pago' || b.status === 'acordo_realizado') return false;
+    if (!intervalo) return true; // modo "tudo"
+    const d = toDate(b);
+    return d && d >= intervalo.de && d <= intervalo.ate;
+  });
+
+  // 3. Normalizar valores para float
+  const toFloat = v => {
+    const s = String(v || '0').trim().replace(/[^\d,\.]/g, '');
+    if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+    return parseFloat(s) || 0;
+  };
+
+  // 4. Montar mapa do Fácil
+  const mapaFacil = new Map();
+  facil.forEach(b => {
+    const parc  = String(b.parcela || '').trim();
+    const chave = parc ? `P|${b.venda}|${parc}` : `A|${b.venda}|${normalizarValor(b.valor)}`;
+    mapaFacil.set(chave, b);
+  });
+
+  // 5. Montar mapa do CRM
+  const mapaCRM = new Map();
+  crm.forEach(b => {
+    const parc  = String(b.parcela || '').replace(/^'/, '').trim();
+    const chave = parc ? `P|${b.venda}|${parc}` : `A|${b.venda}|${normalizarValor(b.valor)}`;
+    mapaCRM.set(chave, b);
+  });
+
+  // 6. Calcular divergências
+  const difValor = [], soCRM = [], soFacil = [];
+
+  mapaCRM.forEach((b, chave) => {
+    if (mapaFacil.has(chave)) {
+      const f = mapaFacil.get(chave);
+      if (Math.abs(toFloat(b.valor) - toFloat(f.valor)) >= 0.02) {
+        difValor.push({ venda: b.venda, parcela: b.parcela, nome: b.nome,
+                        valorCRM: b.valor, valorFacil: f.valor,
+                        diff: toFloat(f.valor) - toFloat(b.valor) });
+      }
+    } else {
+      soCRM.push(b);
+    }
+  });
+
+  mapaFacil.forEach((f, chave) => {
+    if (!mapaCRM.has(chave)) soFacil.push(f);
+  });
+
+  // 7. Totais
+  const totalCRM   = crm.reduce((s, b)   => s + toFloat(b.valor), 0);
+  const totalFacil = facil.reduce((s, b) => s + toFloat(b.valor), 0);
+  const difTotal   = totalFacil - totalCRM;
+
+  const fmtBR  = v => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const sinal  = difTotal >= 0 ? '+' : '';
+  const difCls = Math.abs(difTotal) < 0.05 ? 'ok' : Math.abs(difTotal) < 500 ? 'warn' : 'err';
+
+  // 8. Label do período no resultado
+  const labelPeriodo = getConcilPeriodoLabel();
+  document.getElementById('concil-periodo-resultado').innerHTML =
+    `<strong>Período conciliado:</strong> ${labelPeriodo} &nbsp;·&nbsp; CRM: ${crm.length} boletos &nbsp;·&nbsp; Fácil123: ${facil.length} boletos`;
+
+  // 9. Cards de resumo
+  document.getElementById('concil-cards').innerHTML = `
+    <div class="concil-card">
+      <div class="concil-card-label">Fácil123 (colado)</div>
+      <div class="concil-card-val">${fmtBR(totalFacil)}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px;">${facil.length} boletos</div>
+    </div>
+    <div class="concil-card">
+      <div class="concil-card-label">CRM (${concilPeriodo === 'tudo' ? 'toda a base' : labelPeriodo})</div>
+      <div class="concil-card-val">${fmtBR(totalCRM)}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px;">${crm.length} boletos</div>
+    </div>
+    <div class="concil-card" style="border-color:${difCls==='ok'?'var(--accent)':difCls==='warn'?'#f0a500':'var(--danger)'};">
+      <div class="concil-card-label">Diferença (Fácil − CRM)</div>
+      <div class="concil-card-val ${difCls}">${sinal}${fmtBR(difTotal)}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px;">${difValor.length} val. dif. · ${soCRM.length} só CRM · ${soFacil.length} só Fácil</div>
+    </div>
+  `;
+
+  // 10. Seção: valores divergentes
+  document.getElementById('concil-cnt-valor').textContent = difValor.length;
+  document.getElementById('concil-cnt-valor').className   = 'badge-cnt ' + (difValor.length === 0 ? 'ok' : 'warn');
+  document.getElementById('concil-lista-valor').innerHTML = difValor.length === 0
+    ? '<div class="concil-empty">✅ Nenhuma divergência de valor encontrada.</div>'
+    : `<table class="concil-table">
+        <thead><tr><th>Cliente</th><th>Venda</th><th>Parcela</th><th style="text-align:right">Valor CRM</th><th style="text-align:right">Valor Fácil</th><th style="text-align:right">Diferença</th></tr></thead>
+        <tbody>${difValor.map(d => `<tr>
+          <td>${d.nome}</td><td>${d.venda}</td><td>${normalizarParcela(d.parcela)}</td>
+          <td style="text-align:right">${normalizarValor(d.valorCRM)}</td>
+          <td style="text-align:right">${normalizarValor(d.valorFacil)}</td>
+          <td style="text-align:right" class="${d.diff>0?'diff-neg':'diff-pos'}">${d.diff>0?'+':''}${fmtBR(d.diff)}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+
+  // 11. Seção: só no CRM
+  document.getElementById('concil-cnt-socrm').textContent = soCRM.length;
+  document.getElementById('concil-cnt-socrm').className   = 'badge-cnt ' + (soCRM.length === 0 ? 'ok' : '');
+  const totSoCRM = soCRM.reduce((s, b) => s + toFloat(b.valor), 0);
+  document.getElementById('concil-lista-socrm').innerHTML = soCRM.length === 0
+    ? '<div class="concil-empty">✅ Todos os boletos do CRM foram encontrados no Fácil123.</div>'
+    : `<table class="concil-table">
+        <thead><tr><th>Cliente</th><th>Venda</th><th>Parcela</th><th style="text-align:right">Valor</th><th>Vencimento</th><th>Status CRM</th></tr></thead>
+        <tbody>${soCRM.map(b => `<tr>
+          <td>${b.nome}</td><td>${b.venda}</td><td>${normalizarParcela(b.parcela)}</td>
+          <td style="text-align:right">${normalizarValor(b.valor)}</td>
+          <td>${normalizarData(b.vencimento)}</td>
+          <td><span class="badge ${statusBadge[b.status]||'b-pendente'}">${statusLabel[b.status]||b.status}</span></td>
+        </tr>`).join('')}</tbody>
+        <tfoot><tr><td colspan="3" style="font-weight:600;padding:6px 8px;">Total</td>
+          <td style="text-align:right;font-weight:700;padding:6px 8px;">${fmtBR(totSoCRM)}</td>
+          <td colspan="2"></td></tr></tfoot>
+      </table>`;
+
+  // 12. Seção: só no Fácil
+  document.getElementById('concil-cnt-sofacil').textContent = soFacil.length;
+  document.getElementById('concil-cnt-sofacil').className   = 'badge-cnt ' + (soFacil.length === 0 ? 'ok' : 'warn');
+  const totSoFacil = soFacil.reduce((s, b) => s + toFloat(b.valor), 0);
+  document.getElementById('concil-lista-sofacil').innerHTML = soFacil.length === 0
+    ? '<div class="concil-empty">✅ Todos os boletos do Fácil123 já estão no CRM.</div>'
+    : `<table class="concil-table">
+        <thead><tr><th>Cliente</th><th>Venda</th><th>Parcela</th><th style="text-align:right">Valor</th><th>Vencimento</th></tr></thead>
+        <tbody>${soFacil.map(f => `<tr>
+          <td>${f.nome}</td><td>${f.venda}</td><td>${normalizarParcela(f.parcela)}</td>
+          <td style="text-align:right">${normalizarValor(f.valor)}</td>
+          <td>${f.vencimento || '—'}</td>
+        </tr>`).join('')}</tbody>
+        <tfoot><tr><td colspan="3" style="font-weight:600;padding:6px 8px;">Total</td>
+          <td style="text-align:right;font-weight:700;padding:6px 8px;">${fmtBR(totSoFacil)}</td>
+          <td></td></tr></tfoot>
+      </table>`;
+
+  // 13. Mostrar resultado
+  document.getElementById('concil-step-entrada').style.display   = 'none';
+  document.getElementById('concil-step-resultado').style.display = 'block';
+}
+
+
 let salvando = false; // trava global — impede duplo clique
 
 function setBotoesSalvar(bloqueado) {
@@ -1047,7 +1617,7 @@ function renderTabela() {
     const alerta = classeAlerta(b);
     const btnPago = isPago
       ? `<button class="btn-acao" onclick="abrirTratativa('${b.id}')" style="opacity:0.5;font-size:12px;">Ver</button>`
-      : `<button class="btn-pago" onclick="marcarPagoRapido('${b.id}')" title="Marcar como pago">✓ Pago</button> <button class="btn-acao" onclick="abrirTratativa('${b.id}')">Registrar</button> <button class="btn-wa" onclick="copiarWhatsApp('${b.id}')">WA</button>`;
+      : `<button class="btn-pago" onclick="marcarPagoRapido('${b.id}')" title="Marcar como pago">✓ Pago</button> <button class="btn-acao" onclick="abrirTratativa('${b.id}')">Registrar</button> <button class="btn-acao" onclick="abrirAlterarVencimento('${b.id}')" title="Alterar data de vencimento" style="border-color:#7c3aed;color:#5b21b6;">📅</button> <button class="btn-wa" onclick="copiarWhatsApp('${b.id}')">WA</button>`;
 
     // Linha expansível de juros para boletos pagos
     let linhaJuros = '';
@@ -1136,6 +1706,7 @@ function renderTabela() {
       ? `<button class="btn-acao" onclick="abrirTratativa('${b.id}')" style="opacity:0.5;font-size:12px;">Ver</button>`
       : `<button class="btn-pago" onclick="marcarPagoRapido('${b.id}')">✓ Pago</button>
          <button class="btn-acao" onclick="abrirTratativa('${b.id}')">Registrar</button>
+         <button class="btn-acao" onclick="abrirAlterarVencimento('${b.id}')" title="Alterar vencimento" style="border-color:#7c3aed;color:#5b21b6;">📅</button>
          <button class="btn-wa" onclick="copiarWhatsApp('${b.id}')">WA</button>`;
     return `<div class="boleto-card ${isPago?'linha-paga':alerta}">
       <div class="bc-header">
