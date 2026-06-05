@@ -129,6 +129,18 @@
   .b-promessa  { background: var(--purple-bg); color: var(--purple-text); }
   .b-escalado  { background: var(--danger-bg); color: var(--danger); }
   .b-pago      { background: var(--accent-bg); color: var(--accent-text); }
+  .b-cancelado { background: #f0f0f0; color: #888; text-decoration: line-through; }
+
+  /* ── CANCELAMENTO ───────────────────────────────────────────── */
+  .modal-cancel { width: 460px; }
+  .cancel-dados { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 14px; }
+  .cancel-dados-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .cancel-dados-row:last-child { border-bottom: none; }
+  .cancel-dados-row .cd-label { color: var(--text2); }
+  .cancel-dados-row .cd-val   { font-weight: 500; }
+  .cancel-aviso { background: #fff0f0; border: 1px solid #fbb; border-radius: var(--radius-sm); padding: 10px 12px; font-size: 12px; color: #c0392b; margin-bottom: 14px; }
+  .btn-cancelar-boleto { background: #fff0f0; border-color: #c0392b; color: #c0392b; }
+  .btn-cancelar-boleto:hover { background: #fde; }
   .b-serasa-sim { background: #faeaea; color: #a02020; font-weight: 600; }
   .b-serasa-nao { background: #f0f0ec; color: var(--text2); }
 
@@ -542,6 +554,7 @@
     <div class="tabs">
       <button class="tab active" onclick="setTab('nova')">Nova tratativa</button>
       <button class="tab" onclick="setTab('hist')">Histórico</button>
+      <button class="tab" onclick="setTab('cancelar')" style="color:#c0392b;" id="tab-btn-cancelar">🗑️ Cancelar</button>
     </div>
     <div id="tab-nova">
       <div class="form-row">
@@ -596,6 +609,29 @@
     </div>
     <div id="tab-hist" style="display:none;">
       <div id="hist-lista"></div>
+    </div>
+    <div id="tab-cancelar" style="display:none;">
+      <div class="cancel-aviso" style="margin-top:4px;">
+        ⚠️ <strong>Atenção:</strong> O boleto ficará com status <strong>Cancelado</strong> e será removido de todos os cálculos. O registro permanece na planilha para auditoria.
+      </div>
+      <div class="form-group">
+        <label>Motivo do cancelamento <span style="color:var(--danger);">*</span></label>
+        <select id="cancel-motivo">
+          <option value="">— Selecione o motivo —</option>
+          <option value="Cancelado no Fácil123">Cancelado no Fácil123</option>
+          <option value="Boleto duplicado">Boleto duplicado</option>
+          <option value="Erro de importação">Erro de importação</option>
+          <option value="Reparcelamento">Reparcelamento (substituído por novo boleto)</option>
+          <option value="Acordo extrajudicial">Acordo extrajudicial</option>
+          <option value="Inadimplência irrecuperável">Inadimplência irrecuperável</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Justificativa <span style="color:var(--danger);">*</span></label>
+        <textarea id="cancel-obs" rows="3" placeholder="Descreva o motivo com detalhes para auditoria futura..."></textarea>
+      </div>
+      <button id="btn-confirmar-cancel" class="btn btn-cancelar-boleto" style="width:100%;padding:10px;font-weight:700;" onclick="confirmarCancelamento()">🗑️ Confirmar cancelamento</button>
     </div>
   </div>
 </div>
@@ -987,7 +1023,70 @@ async function atualizarBoletosMassa() {
 
 
 
-// ─── CONCILIAÇÃO CRM × FÁCIL123 ─────────────────────────────────────────────
+// ─── CANCELAMENTO DE BOLETO ──────────────────────────────────────────────────
+
+let boletoParaCancelar = null;
+
+function abrirCancelamento(id) {
+  const b = boletos.find(b => b.id === id);
+  if (!b) { notify('Boleto não encontrado.'); return; }
+  boletoParaCancelar = b;
+
+  // Reutiliza o modal-trat: preenche cabeçalho igual ao abrirTratativa
+  boletoAtivo = b;
+  document.getElementById('mt-nome').textContent = b.nome;
+  document.getElementById('mt-info').textContent = `Venda ${b.venda}${b.parcela ? ' · Parcela ' + b.parcela : ''} · R$ ${b.valor} · Venc. ${b.vencimento}`;
+
+  // Limpa os campos de cancelamento
+  document.getElementById('cancel-motivo').value = '';
+  document.getElementById('cancel-obs').value    = '';
+
+  setTab('cancelar');
+  document.getElementById('modal-trat').classList.add('open');
+}
+
+async function confirmarCancelamento() {
+  if (!boletoParaCancelar) return;
+
+  const motivo = document.getElementById('cancel-motivo').value;
+  const obs    = document.getElementById('cancel-obs').value.trim();
+
+  if (!motivo) { notify('Selecione o motivo do cancelamento.'); return; }
+  if (!obs)    { notify('A justificativa é obrigatória para cancelamento.'); return; }
+
+  const btn = document.getElementById('btn-confirmar-cancel');
+  btn.disabled = true;
+  btn.textContent = '⏳ Cancelando...';
+
+  const agora = new Date().toLocaleString('pt-BR');
+  const obsCompleta = `[CANCELAMENTO] Motivo: ${motivo} | ${obs}`;
+
+  const r = await gsCall({
+    action:    'cancelarBoleto',
+    boletoId:  boletoParaCancelar.id,
+    motivo,
+    obs:       obsCompleta,
+    dataHora:  agora,
+    canal:     'Sistema CRM',
+    resp:      ''
+  });
+
+  btn.disabled = false;
+  btn.textContent = '🗑️ Confirmar cancelamento';
+
+  if (!r) return;
+
+  if (r.ok) {
+    notify(`🗑️ Boleto cancelado: ${boletoParaCancelar.nome} · R$ ${normalizarValor(boletoParaCancelar.valor)}`);
+    fecharModal('modal-cancel');
+    boletoParaCancelar = null;
+    await carregarDados();
+  } else {
+    notify('Erro: ' + (r.error || 'Falha ao cancelar.'));
+  }
+}
+
+
 
 let concilPeriodo = 'mes';
 let concilMesOffset = 0;
@@ -1108,7 +1207,7 @@ function executarConciliacao() {
     return new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
   };
   const crm = boletos.filter(b => {
-    if (b.status === 'pago' || b.status === 'acordo_realizado') return false;
+    if (b.status === 'pago' || b.status === 'acordo_realizado' || b.status === 'cancelado') return false;
     if (!intervalo) return true; // modo "tudo"
     const d = toDate(b);
     return d && d >= intervalo.de && d <= intervalo.ate;
@@ -1508,8 +1607,8 @@ function normalizarData(val) {
   return s;
 }
 
-const statusLabel = { pendente:'Pendente', contato:'Contato feito', promessa:'Promessa', escalado:'Escalado', pago:'Pago', acordo_realizado:'Acordo ✓' };
-const statusBadge = { pendente:'b-pendente', contato:'b-contato', promessa:'b-promessa', escalado:'b-escalado', pago:'b-pago', acordo_realizado:'b-acordo-realizado' };
+const statusLabel = { pendente:'Pendente', contato:'Contato feito', promessa:'Promessa', escalado:'Escalado', pago:'Pago', acordo_realizado:'Acordo ✓', cancelado:'Cancelado' };
+const statusBadge = { pendente:'b-pendente', contato:'b-contato', promessa:'b-promessa', escalado:'b-escalado', pago:'b-pago', acordo_realizado:'b-acordo-realizado', cancelado:'b-cancelado' };
 
 function setOrdem(col) {
   if (ordemAtual.col === col) {
@@ -1605,9 +1704,10 @@ function renderTabela() {
     return;
   }
 
-  const naoPageos = lista.filter(b => b.status !== 'pago' && b.status !== 'acordo_realizado');
+  const naoPageos  = lista.filter(b => b.status !== 'pago' && b.status !== 'acordo_realizado' && b.status !== 'cancelado');
   const acordosReal = lista.filter(b => b.status === 'acordo_realizado');
-  const pagos     = lista.filter(b => b.status === 'pago');
+  const pagos      = lista.filter(b => b.status === 'pago');
+  const cancelados = lista.filter(b => b.status === 'cancelado');
 
   const gerarLinha = b => {
     const ult = b.tratativas && b.tratativas.length > 0 ? b.tratativas[b.tratativas.length-1] : null;
@@ -1686,6 +1786,10 @@ function renderTabela() {
     html += `<tr class="separador-pago"><td colspan="10">✓ Pagos (${pagos.length})</td></tr>`;
     html += pagos.map(gerarLinha).join('');
   }
+  if (cancelados.length > 0) {
+    html += `<tr class="separador-pago"><td colspan="10" style="color:#999;">🗑️ Cancelados (${cancelados.length})</td></tr>`;
+    html += cancelados.map(gerarLinha).join('');
+  }
   tbody.innerHTML = html;
 
   // ── Cards mobile ──────────────────────────────────────────────
@@ -1736,6 +1840,10 @@ function renderTabela() {
     mobileHtml += `<div class="separador-pago-mob">✓ Pagos (${pagos.length})</div>`;
     mobileHtml += pagos.map(renderCard).join('');
   }
+  if (cancelados.length > 0) {
+    mobileHtml += `<div class="separador-pago-mob" style="color:#999;">🗑️ Cancelados (${cancelados.length})</div>`;
+    mobileHtml += cancelados.map(renderCard).join('');
+  }
   document.getElementById('boleto-cards').innerHTML = mobileHtml;
 }
 
@@ -1750,7 +1858,7 @@ function renderSummary() {
   };
 
   // Exclui pago E acordo_realizado dos "ativos" (não são inadimplentes)
-  const baixados  = ['pago', 'acordo_realizado'];
+  const baixados  = ['pago', 'acordo_realizado', 'cancelado'];
   const ativos    = boletos.filter(b => !baixados.includes(b.status));
   const pagos     = boletos.filter(b => b.status === 'pago');
   const acordos   = boletos.filter(b => b.status === 'acordo_realizado');
@@ -1839,7 +1947,7 @@ function calcReceber() {
   }
 
   const lista = boletos.filter(b => {
-    if (b.status === 'pago' || b.status === 'acordo_realizado') return false;
+    if (b.status === 'pago' || b.status === 'acordo_realizado' || b.status === 'cancelado') return false;
     const d = toDate(b);
     return d && d >= de && d <= ate;
   });
@@ -1900,10 +2008,11 @@ function renderHistModal() {
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function setTab(t) {
   tabAtiva = t;
-  document.getElementById('tab-nova').style.display = t==='nova' ? 'block' : 'none';
-  document.getElementById('tab-hist').style.display = t==='hist' ? 'block' : 'none';
+  document.getElementById('tab-nova').style.display     = t==='nova'     ? 'block' : 'none';
+  document.getElementById('tab-hist').style.display     = t==='hist'     ? 'block' : 'none';
+  document.getElementById('tab-cancelar').style.display = t==='cancelar' ? 'block' : 'none';
   document.querySelectorAll('.tabs .tab').forEach((b,i) => {
-    b.classList.toggle('active', ['nova','hist'][i] === t);
+    b.classList.toggle('active', ['nova','hist','cancelar'][i] === t);
   });
   if (t === 'hist') renderHistModal();
 }
@@ -2205,7 +2314,7 @@ function renderClientes() {
 
   // Calcular totais por grupo
   const lista = Object.entries(grupos).map(([nome, bols]) => {
-    const ativos   = bols.filter(b => b.status !== 'pago');
+    const ativos   = bols.filter(b => b.status !== 'pago' && b.status !== 'cancelado');
     const vencidos = ativos.filter(b => { const d=toDate(b); return d && d <= hoje; });
     const futuros  = ativos.filter(b => { const d=toDate(b); return d && d > hoje; });
     const valorVencido = vencidos.reduce((s,b) => s + toFloat(b.valor), 0);
@@ -2244,8 +2353,8 @@ function renderClientes() {
 
     const linhas = g.bols.map(b => {
       const dv = toDate(b);
-      const atrasado = b.status!=='pago' && dv && dv < hoje;
-      const venceHoje = b.status!=='pago' && dv && dv.getTime()===hoje.getTime();
+      const atrasado = b.status!=='pago' && b.status!=='cancelado' && dv && dv < hoje;
+      const venceHoje = b.status!=='pago' && b.status!=='cancelado' && dv && dv.getTime()===hoje.getTime();
       const corVenc = atrasado ? 'color:var(--danger);font-weight:600;' : venceHoje ? 'color:#b07800;font-weight:600;' : '';
       return `<tr>
         <td>${b.venda}</td>
@@ -2304,7 +2413,7 @@ function renderRelatorio() {
     const p=d.split('/'); return new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));
   };
 
-  const ativos    = boletos.filter(b => b.status !== 'pago');
+  const ativos    = boletos.filter(b => b.status !== 'pago' && b.status !== 'cancelado');
   const pagos     = boletos.filter(b => b.status === 'pago');
   const atrasados = ativos.filter(b => { const d=toDate(b); return d && d<hoje; });
   const venceHoje = ativos.filter(b => { const d=toDate(b); return d && d.getTime()===hoje.getTime(); });
