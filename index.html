@@ -1046,7 +1046,8 @@ function abrirCancelamento(id) {
 }
 
 async function confirmarCancelamento() {
-  if (!boletoParaCancelar) return;
+  const boleto = boletoAtivo || boletoParaCancelar;
+  if (!boleto) { notify('Nenhum boleto selecionado.'); return; }
 
   const motivo = document.getElementById('cancel-motivo').value;
   const obs    = document.getElementById('cancel-obs').value.trim();
@@ -1059,16 +1060,15 @@ async function confirmarCancelamento() {
   btn.textContent = '⏳ Cancelando...';
 
   const agora = new Date().toLocaleString('pt-BR');
-  const obsCompleta = `[CANCELAMENTO] Motivo: ${motivo} | ${obs}`;
 
   const r = await gsCall({
-    action:    'cancelarBoleto',
-    boletoId:  boletoParaCancelar.id,
+    action:   'cancelarBoleto',
+    boletoId: boleto.id,
     motivo,
-    obs:       obsCompleta,
-    dataHora:  agora,
-    canal:     'Sistema CRM',
-    resp:      ''
+    obs:      `[CANCELAMENTO] Motivo: ${motivo} | ${obs}`,
+    dataHora: agora,
+    canal:    'Sistema CRM',
+    resp:     ''
   });
 
   btn.disabled = false;
@@ -1077,8 +1077,8 @@ async function confirmarCancelamento() {
   if (!r) return;
 
   if (r.ok) {
-    notify(`🗑️ Boleto cancelado: ${boletoParaCancelar.nome} · R$ ${normalizarValor(boletoParaCancelar.valor)}`);
-    fecharModal('modal-cancel');
+    notify(`🗑️ Boleto cancelado: ${boleto.nome} · R$ ${normalizarValor(boleto.valor)}`);
+    fecharModal('modal-trat');
     boletoParaCancelar = null;
     await carregarDados();
   } else {
