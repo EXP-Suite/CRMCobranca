@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRM de Cobranças — Explosão Alimentos · Rev 10.4</title>
+<title>CRM de Cobranças — Explosão Alimentos · Rev 11.0</title>
 
 <!-- Preview WhatsApp / redes sociais -->
 <meta property="og:title"       content="CRM de Cobranças — Explosão Alimentos" />
@@ -104,10 +104,9 @@
   .th-filter { padding: 4px 6px 6px; }
   .th-filter select, .th-filter input { width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 11px; background: var(--surface); color: var(--text); outline: none; }
   .th-filter select:focus, .th-filter input:focus { border-color: var(--accent); }
-  .col-nome { width: 16%; }
-  .col-venda { width: 6%; }
-  .col-parc { width: 5%; }
-  .col-valor { width: 8%; text-align: right; }
+  .col-nome { width: 22%; }
+  .col-facilid { width: 7%; font-size:11px; color:var(--text3); }
+  .col-valor { width: 9%; text-align: right; }
   .col-venc { width: 9%; }
   .col-status { width: 9%; }
   .col-serasa { width: 6%; text-align: center; }
@@ -357,6 +356,49 @@
   .b-acordo-realizado  { background:var(--accent-bg); color:var(--accent-text); }
   @media(max-width:768px){ .modal-acordo{width:100%!important;} .forma-grid{grid-template-columns:1fr;} }
 
+  /* ── NEGATIVAÇÃO SERASA ─────────────────────────────────────── */
+  .modal-neg { width: 95vw; max-width: 1100px; }
+  .neg-step { display: none; }
+  .neg-step.active { display: block; }
+  .neg-step-bar { display: flex; gap: 0; margin-bottom: 1.25rem; }
+  .neg-step-item { flex: 1; text-align: center; font-size: 11px; font-weight: 600;
+    padding: 8px 4px 6px; border-bottom: 3px solid var(--border); color: var(--text3); }
+  .neg-step-item.active { border-bottom-color: var(--danger); color: var(--danger); }
+  .neg-step-item.done   { border-bottom-color: #25d366; color: #128c42; }
+  .neg-sel-list { max-height: 340px; overflow-y: auto; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); }
+  .neg-sel-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+    border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; }
+  .neg-sel-row:last-child { border-bottom: none; }
+  .neg-sel-row:hover { background: var(--surface2); }
+  .neg-sel-row.selected { background: #fff5f5; }
+  .neg-sel-row input[type=checkbox] { accent-color: var(--danger); width: 15px; height: 15px; flex-shrink: 0; }
+  .neg-sel-nome { flex: 1; font-weight: 500; }
+  .neg-sel-venc { font-size: 12px; color: var(--danger); white-space: nowrap; }
+  .neg-sel-val  { font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .neg-qtd-bar  { background: var(--danger-bg); border: 1px solid var(--danger); border-radius: var(--radius-sm);
+    padding: 6px 12px; font-size: 12px; color: var(--danger); margin-bottom: 10px; display: flex;
+    justify-content: space-between; align-items: center; }
+  /* Tabela de edição */
+  .neg-edit-wrap { overflow-x: auto; max-height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+  .neg-table { border-collapse: collapse; font-size: 12px; min-width: 1200px; width: 100%; }
+  .neg-table th { position: sticky; top: 0; background: #1a5c38; color: #fff; font-size: 10px;
+    font-weight: 700; padding: 7px 6px; text-align: left; white-space: nowrap; z-index: 2; }
+  .neg-table td { padding: 5px 4px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .neg-table tr:last-child td { border-bottom: none; }
+  .neg-table tr:hover td { background: var(--bg); }
+  .neg-table input, .neg-table select {
+    width: 100%; padding: 4px 5px; border: 1px solid var(--border); border-radius: 3px;
+    font-size: 11px; font-family: inherit; background: var(--surface); color: var(--text); }
+  .neg-table input[readonly] { background: var(--surface2); color: var(--text2); cursor: not-allowed; }
+  .neg-table input.obrig { border-color: #f0a500; background: #fffbe6; }
+  .neg-th-req::after { content: " *"; color: #ffc107; }
+  .neg-aviso { background: var(--warn-bg); border: 1px solid #f0a500; border-radius: var(--radius-sm);
+    padding: 8px 12px; font-size: 12px; color: var(--warn-text); margin-bottom: 10px; line-height: 1.5; }
+  .neg-leg { display: flex; gap: 14px; font-size: 11px; color: var(--text2); margin-bottom: 6px; align-items: center; }
+  .neg-leg-box { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+
+
   /* ── CONCILIAÇÃO ────────────────────────────────────────────── */
   .modal-concil { width: 860px; }
   .concil-resumo { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
@@ -405,6 +447,7 @@
   .update-stat-item strong { font-size: 18px; font-weight: 700; }
   .update-nao-encontrados { margin-top: 6px; font-size: 12px; color: var(--danger); }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -412,12 +455,14 @@
   <div class="topbar-brand"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALoAAABQCAIAAAAhs/hCAAABCGlDQ1BJQ0MgUHJvZmlsZQAAeJxjYGA8wQAELAYMDLl5JUVB7k4KEZFRCuwPGBiBEAwSk4sLGHADoKpv1yBqL+viUYcLcKakFicD6Q9ArFIEtBxopAiQLZIOYWuA2EkQtg2IXV5SUAJkB4DYRSFBzkB2CpCtkY7ETkJiJxcUgdT3ANk2uTmlyQh3M/Ck5oUGA2kOIJZhKGYIYnBncAL5H6IkfxEDg8VXBgbmCQixpJkMDNtbGRgkbiHEVBYwMPC3MDBsO48QQ4RJQWJRIliIBYiZ0tIYGD4tZ2DgjWRgEL7AwMAVDQsIHG5TALvNnSEfCNMZchhSgSKeDHkMyQx6QJYRgwGDIYMZAKbWPz9HbOBQAABP50lEQVR4nO29d5xdVbk+/r5rrd1OPzNn+kxmJpPeG5CEUAPEIF1AQZBqRUUUFbEAInqvKOgVFUQsNKWDofcaEkghPZn0ZHo/c9pua72/P/aZyRACBq9+773+eD/5JJk5e6+z9lrPeuuz1kYigo/kIzk4Yf/THfhI/i/JR3D5SD6EiP/pDvw/FSJSBEAECAAY/AoAEYEx/B/u3P8Fwf+f+C5KEQFx9gHalKQCxvAj1HyA/PvDhYiIisqjL51Z3dy9dmvnnp58JmubhqhIGBMby2aOq2iqLQ30jVL0kaZ5P/k3h4sixZABwOrmttsfWfPs2zuyOT8ZM8sSlqlzT0HfoN3dXwCS08aUX3TytDOOmaBxLpXkjP9P9/1/o/w7wyXQE3nHueEPr/3ukbXVFZFPLpy86LD6sXUlsYgOwADQcZ2WzsGlG9ofeKH5tdV7Zk+s/M8vHz17fM1HOuaA8m8LF6UUY6yle+Ci655cva3n6gsO/eyp06KhEAAASCBFhIgEiAAcAAHUy6t2fe+2V5v3pH/9zYVnHTtFSsX5R5Hju+TfEy6KiCF29KVP++bD/Vn73mtPmj2xDkBK38dAoPjUFPxRhIwxpuUd++s3P/eXZ7b84QeLP3HM5I90zH7ybxhIEwACuL7/5Z8+3TVQeOrmT4wfVeH7NmeccwZEpCQwDowTIIBkUgICIEnfDRnarVctlgRfvvGFcXWlU8dUfoSYkfJvqGyVVIj44Eubn3m79fffOWH8qArPtwXniEBKAdNRmIoxb2DQ6+tTngfcAG6AAs5RSUmEv7ziuIaqyJW3vOhJf58i+kj+LbULMgSA+5/deNycumPnjJHS1TgHACJCbmTa2wbvf5ReXWF2ZyOaBalKd+JodvICbfZkVB5jKJUXMq3/+PIxp1z5yJJXm884ZpKUxPlHCgbg3w8uRMAQswV7897+L542laiYtwUiQLHnyWcyP7op0tbFDdPluotGpHdQbNvtP/m6/elFxlfPZcrnyKVyj5pZf/Ssmt89+s5pR09gH5Tc+/+X/LcGgopJsIN1l6mYhj/oG96/BfWB3+t60vVkOGwW71IKmLapeeOb37i6ujstyssoZEqdZYTfT3nSlB429Dsed37/KHAdSIEiAHb+x6asbu7auqcXEZT6yCIBfFi4EIBUSkoVDB8C4FCkMSxKkVKkFEhFUiqpSKkgB1+8ng3dIKU6SNwQkFRKKhpugQ19ryJ6VzsIABCx9GTY2N2eDjqGjJHyxjSOSf3qJ0uq42wwxwCRSKHMg5PODah8RpTE+F1P+bv2AtcRAEAdObMmZIhX1rQAgPoXx49ENDRuB7WWgqXy/x7CBwsXIpJSIQBnjHPGGAKQkn6+kCsU8nYhH1wFQIwhY8gYcIacM86QsWItRvpOd19/W3e6vbsfyOWcIf79SF4qhYCcMc5Q+k5Xb397d7q9Z7CjZ8B1bIYYtCOHECmV0jVt3pSaJa/tcD0HuZCKEFHX+MLjTpjyu589XxnRHU8xBEIEyKObtzNAnsg78snXg1QMkSwviY2tL1m2thUAglJSYNn+uZMklVJKIeLQuCEiEtDwmtxvCqRSABQsFQQggvde+a+Tg/JdgmCSc3TdwqrNbW+ua127tb2128nafjqTQ0TBWUlJnHxH41BZliTpku8m4rGSRDznuJ0dXUzovWm7J213D9q+5Ej+2Lr42ceMOf/jM61QOEiTvPd7iQgAOWOu67y0YvvjrzWv2NzZ0e/4ijMEAFUW5VOaShfOHnXC/HEVqVIAUERBQ5ecNv3e5zZe8/vXfvLF44Cjkj5jKL38rPFT+6775srLvjuHtAIQABBSntyQk+e65b+1RX3e45xJSVywKY2pZevbPd9njBEh4r4ydqBv2Ls16wcIAUCAxOFRJWKIQdVzMJdv7c45nq8zVpYKlcXDQYYwGAECIgqWX3A/2Z5DBIJzjYvhXOL/g5j/7y/uoBOZbPauJ9bc/fTmzS39sZA5qipRXxEpiYZCIR0ZOI7M2o7nYy5vZwsFT6LtKtf1pS+BMdMUls4SYaOiJNJYE6tMhvqyzvNv737hrT0LJkbu+P7p1VXlVJyNEd9bxJB67KUNN/5lxfodvY1ViUMnVU9sLEklLEQYSDtb9vav2NSxeXdfKozfuvCIS06dich8qQBAcHbHYyu/89vXPnXChKsvmFdZGiUlEUFJJYV271euOOapN1ksAlIBABKmtLgRTtmGCX/+vlld7nuO0MzfPPjWzX9dten+SwTTAECRJEWMMxyhlaVU7ECoUQFbApEhDH1KAECERCSJNM4A6LHXm//69IbVW7sGcjZTSAARS9RVJOZNqz7tqLGHTKwdbrC7P/vSqt0vrdy7cWfv4GBeAQmh1ZZH5k2tWTS3cea4KgCQSjH8F1bV/w5cAqy8umLLt3796ua9mUWHNZx93MR5U6qqUxHAD9BMBKCkksEPnDEA9l7D9+irmy678aUp1fDAjedFo1GA4WEtYiWTy1/5y2fveW7r0bNGXXbmzKNm1obM0H6N+NJ9e1Pn7/+29qEXthx/aP3NVyysLU8AgCLZN2j/9M6lf3qieVxd+M5rThxdk1Lkg1KMmy89/xT7yjWTzUiBFAIowiS3orFKxyPvlm9GZk2Srs118+FXNlz5y9e+ctbMXe0DW/b09WccXypdE+UJY1Jjav7U6iNm1CeiIQCQigKNFygevv8qV1IpBGBs36Dt7Rr45i9feGrZzkMmVi2a1zh5dEnUEnlH7W5Lv72pa9n69pae9AWLJ//4S8d09uVuuX/Vo682Z/PeuFGJaU1loypiui76Bwtb9vSv2to5kHYXTK+58rw5h09rgCBl8K+BzAfBJcDKfU+//cUbX54+vub6L8xbMK0hKK8AyKJTVrwbAy2NCBhoXIR9mpcguHQ4rCUAROBcf+Tljedd+/gNF07+2oUfl0oFmpmIADGTzX/musdeX9v5n5cdccnJ0wEFgC8DDyVwOgAAkHMWmNRn39p22Y3PpeLm9y8+/JXVe994Z+/e7qzGueC8rSf38Xl19/7o9EDBINN2du5dfdalR/bZBcGRiIjCaJTEq3yHctd/IX7CfOkWuG4981bz2d95oiSh15VHx9aUVJRagqPr0t7O7JY9PXs7syVx81PHTbjsrNmpRCTwsYbMAW3b0/PmxvZVmzq2t6QHc27BcQggZOghS1SVxaY1pR54YWNHb/7mK449ecFYgP0L4Nm8fe8z6675/bLJo1O729IE9JnFkz9x7LjJjan9FurAYO6pZdt//eA7G3b0XnbWjB9cfISuiX8RYt4XLgFW3tm8+2NXPHTcYU23XbUobJpSuUBUDG2CG4PZo6JRH2723T8O/RQYcCJARoiKgHM88esP5/q7Xrz9s1wYMBQqe553/g8eeWVtx33Xn3j07LFKeaQUCxxmIhj27BAAURIQgOD69tbuc767ZOOu3jF1ySOm186ZWF5bFgmHLdu2+7P2x+eN1XVBihAxrfynPn3p0at3eCEDFRGRBXoqXu07NPjdi0tOPVp5NtP09Tva31zbsnj+mNryGIA28ok8z123o+f+5zfd+fT6krD1s8uP/di8MQDguN7DL2/+8xPr127tZoLVVUQbq2KVpeGQKQDAtmXPgN3Sk9neOlAWt/7yo5ObalKkXKVG+DVEiMgYB+RPvrH5Szc+f/FJU7905qxUIgoAwZopDj4gMmCMA3DXc37z0Krr7li2cE7dH753cixs/CsQ835woQAu533vgXe2p9+4/Zx4JOT7nuAYpLyUUsg5onage/c1MuJvCOZ2xIeulMCF/h/3vPmrO19+8/fnj6qrDbIpnLFf3vvq93/39l9/fNKJ88d7ni0EDxQ9KQCh44gvQPJIKWTMl0oIY922lnXbe04/aoJlmu/pjl/sjCKXa4995WvznnoTohFQqgiXWJV0of8b56Y++THwHeAIyAF4EMhLNWKSEBnHQKttb+2++jevPLl09y+/cfTY2tS3b3lx0+6BI2fUnrVw/BHTq+srEwey2qqnPwOAqWRU+m5QyQKlALDoDzMWeD6cs7budHVZabE+ygCBIRUTB4gIyAhAKhKcAYoXV27/9A8eP2JGzZ3XnKIJbYTb9M+RA/sfioAx1tOffnND5+fPmBWPRHzPEWLI+WA6MvDJl22tsrtXZbOkCDWOpgW6zkydWxYKjlyA4MARFSlfgi9lwVaDWW9PizaqJjx5ApAHAPUVsZxLrZ39o+pqSRHnLJ3J3PbI+k9/fNKJ88f7nqcJDhDkazkx7rd30sYdaiCHus4aq9ikRsENkI7gTCl36pjqqWNqAXwpXSAKRiuY5BH+BGmALBL2SOmIQ3AmAmLEQMohXYmklFJ+oEs5FGcTgIAUKUbkKqKmmrL7bjj9O7958du/Wooc5owve+LnC+dPqwVgAATgK+kOaeBA7SJjmEpGAUgpj3NGRMg4MH3fBJCHiByBFFWXJZV0EYFzBlICI+AGjrxSScE5EfnSPnZ201+uP+n0bz72H3e+ee2lRylF/1z98j7uKgEgtPfksgU5fVwZUbEQAwSEzOno8B99Kv38q96uvZgvkO8DASKS4MQYahyFQM5JaKAJ4AiK0PPAk+S65PnY1ZM7+4wxv/qRAA8ASqKmIuzpzwKAVIpztnpzW+dA7pPHTQisFgADUsB0mcu6v7yXP7dcG8wCASAjw3LH1fmfPc04fCZJlzFUyicihowzDIKTfcOlEIbS+QiApqlgCEyBaSUFBMr1Rw4EY4jIAAUNwY4VW1Dgu5wJJV1E/MmXFubyXkUyfPXFhyMKUq5SgAyQAEf2IQCOCrQIMMQAK27Bth960tzbT+UpNmsinzEWSRVtvvIZw6LuEaYCcrZu87Zul46nj64zp0/hXCPpADKNc89zjp7VdM2l8374h+WnHjl25rjqfy5r54PyLooUBeax+KAIQL70n1zy6MAvbjvW4WYs4us6GsbQWBAQgQTwPSCXIL8vq4UYpGNJ00Qy2Wd7LkmdMQDQdAEAw5lfAGjrypi6NqoiikiIAKQAeb6rS332u+a6bV4iSpwzhgwFB8fa0Ox87ee5H1wUPnlhgBgI/Cr17lVYfCQ3SIgigNA1epehBAJiAOD5Q09DiAioDfj5zO4dtGW7aO9k2QILWWZTozFrqp4oAfIYAhGRUv915QkBsqV0OUOGCgmAG3Bg8cGXwAiAF2xn1xe/WfHs27y8Fj3eftSc6C+viAkWDDkCgFQgDAky/cRz2XsfUOs2Y7YAQKBrbMqE2FcuiR21gKSLCIIzqeQXz5x577Obf3bP2/dcdwr+U+tdB4ZLoMGqSsIhg23a0XPCoWMCWwkInNEpn/3c20cuePSaG05Zs9c09SBE3Cds2EcpImX4EwIiUOBLoes0tLAHMzZDTMR0xlC6SnKKhXVfgu1KokCfAQL4AtaNLq3csinmZ3yPIxInpiM3dcvgpvvTP/ePbygZOxqUR0DIdQVY2LjZeX25vaeFEUXrGsW8Wdr0iQyAnDwK4LoxMheqQBEpAAYKINAAzBiU3sbXnmcPPxNfucHo6fc8DxURUIELqEyFzz87+fnzkBBBARIQKPIRkQWhOTc8gFx7q7Nlm2xpx2wOAUQoZFVUaI31rKGW6waRx4DvfPIZ9sJrrLoeTYtJgSUxXTPAt4sgFjoxdN9ZP/Dz2+w33uSCa5YF8RghgCJat7nvoiu871+euug8kA4yRso3NPOzp0297valuzsH6iuS75cF/SfCBRVReSoxe1zZ3U9v/tzp0y3D9H1XcGTImPLmjZ/Cf3j1c1/45ic68wWNwwh/OYiZEYApBADCdyWoEbmFuqxvEIDBKu9LZ3wQN923trQ0OWXcaACorQgxhDfXtkxqqFBADBmQjJWkptz84xUNv6679S9R3fBB+YgO+QXHi+p+NIc7/vxI7IYrBSkUpt3R0f+fv3aefZnlssAYKnRI1xIpd8Fc+OqntPGjgcjXhALa584QkFIAAAiKiGvmrp6Olb+6dcxjL5XlXDB0FTIJQjpwHblggmel95Pbc3u6wzd8Ham4JlhQiWKaD2zX0tcLdz+srViv9Q9wqbiUCMxhDNDQkuWqaYx39CH8zKP18rKBdZtqNMOWjpXPGmYstXqL2tNKo2qC9eR19cg/L4G7H2S5fj0eU4AggfuEgAioQhGhVPaHN+tjGmJHLCBpM2QE6mPzG6/7/bIXV+z+zOKElEpwhv8Mt/d9jRERAbJvfPqQk6587Ju/euUXXz9WCKMYXCCTvn3ouKmbzz1ty8/uGKfHbJJDoTIawHQUwARjQfrSD3Q+44yjFvWhv77MnT/TAiDGSHmfPG6yqWvX3rH8pK8/fNu3j9vdVbj5LyuQa3c9tf7UI8aUJsKBUVDKjyM79PIvvtPTH77vCYqEUCpA8FGlvZyGOn99ZU9HW2VldWbzluwXvid37dASMSgtCVwFWzENvMiry921WwvXXBI5bgGxd5kihaRIAQAq4ohbWna++d0fHbl0bTgUcaNhIikkhFCE9LDOdQABuoBEFfxtaWHubOuUY8F3oOi0at3Z9Mb//FXq/idLpEQrhOGY6ZNjhZXvRmzbM/W8n41u2aRt3GY/9qL6+ZVYW+lJpaHK+HnuCr3bd776c+fs46E0Bht2sGffNHbvyujKi1oolQXC5LrBNcEFILq+Z3NfCCf9qz+G5h8mkCEgkKotS4yuia/b1sUZjtzVIKXC/0be933hwhlTiubPGHPTVw//yi9e2dU+eNmZ046e1WBqApEYQyA198RFrz+wZHzLIGkiiMg5YFJPaKEogCj6kUoFbFhQCqTsLIuvO3vRtBljgXwAQISwJc5dNP2wyVWX3vDsBT9+GYCdfNSY806YUFUa1nWGUNQADFEpGeVG9aWf7lq6qqqj19MEFh1UlWae39qSa95ZEo30XvY9q6VFpkrI88GXAIBACihDxHQt7Bb8797mVJXriYQaYUYJSCkJUpma3u7kXrj6uhPf3GhGIzYB930NWIJHTDMKwFwz1BOLuIKR40bzTuzPT9KiBahzUgoZb0/3L73iO7NffNtMlngMuA9hH3csPGZw0VECCB9/esyLbzo6d9EOm8zqaGPf/qV14fEDsVBcqQKQcjMxYWl7d8JPbkNkoHwlYNCigu+aPrO0aEgPAWoeQRcoJlVKmLoAn1jH+p2ZzVuTkyeRdImIca2xKrF5d9/bG9scT1qmVpUKVZdGArc3iJj+AWXzQa4uY6gUXXjK3FTcuv6Py86++vHrPz//a5+aL32HcwbkN1XXvzJ/Ts/dT8T1mAzydSBRCE8zNoKrpAz6xTjzdc1NJZ2x9WzB7OnzppZFIgQSSZFUwFBKp6m2/N7rP37WVY9efOr0i0+eBQAACkAB7bMXjDFQbnV9Q88Rc/y7/4a6NhydepzIz3fu2h1btpxv2eZUlirPZQyRAItUC1Kgck6eMxYmyv307vyMJB9uIShbABGQJ/Cx226b99racLKkIH0OJIjF9ahpxYAZG6ZO6D5iRnT6GJGMKM/bu3WnfP7tGbtbk+MagRwX2Us3/3rOSyus0lJH+kyyqAO9M6bBNy49fFQ5B+w5/rA9X7t27HNL0yHuuYO+CMd27Bjd3PnqgtnVT7+OJUnH8/p8aYDQBAdAnytX+czDiDAjehh5eIDhiqpI95RGo7EaHIfeWjd7fVuDlTTyuYH23uTkYEsvAoDtuG+sbf/Etx+WRL5UliEaq+MnHNb4iYXjxtWWwT9UkjyIEiMRQ3ScwgXXPra1tfDa7eeEDEGKiBTjxtPPPcmu+OEsES6QRAAiqrDKfD3+2hdPLJ0x0S3kARnjwgqF4vFoorwsAQzId/sHEBkk4xpwAB+UUgSMi77BTEksopQiUkH8OpzlIyIkICVRWGueejx85U8swxhJcyHXWzZ93KxdrXrGCQndlMrxXMnR1cWwFkFCHUSJGeNW6X3RzNS9LSUg/GJ0C3ERiVnlT02rTq9Z+rGMTHPGiRhhkkesUNLXzWWLjzA/cUxTXancsj3VlQFAqEz1NlZqphElQq69tXZ192e+Og+0DCAnxZAnbbbzK5eMuexTunRJStStLW8vj130fY2rAviMWNIX1rQZG7973s5Lvjpv0LXDIelLBGBUzH+boCVEWDOjDvK3ykN7Fs6ZsOiICWMawigAoMe337r7gcNvfTzDaOD3P5wyaYKSDmNMEj3yymZLN2pSEcbZwGBhe8vAq2tbX161x7HlxSdP/dYF82Ih88Mi5u8TGBii6/mGYV10yrRzvv/k2xvajpo1WpEb2L/GSeNXVaSoMw2CBzPrkWs4/hgj0jRp0n5N+S2thYdeYSs3s740IKqyhL1wjjhzITcMkL5SsiQWIZIMATAoHgGyYBPQu54pVFvjRYywQ5KNSB3r2qSN20NKlBmJNIilo+JuqiSxc1ddW6uwDEmAAITkkl9wChHTn5FG/921C1QEmlZYt35K1rW5zkkCQJgZRiimGF9x/Nzyiz4+rizh+t7KrTs2X/+b6f05CkXijQ3ywtPUmQs54PYnn5uZtZ2YyaVPCJyINDPSVKsFxTLBiShaW+2WlkZ7e/KCJCqbK9XWOqF+dOE3//nKl6+e0z0QCoU8hgQoiEeZFjJiSrPeCWsb506oP3Px2dMmasCAPJIOKUpp5vxzTtv8p8f7Dp9z+PgmID+ginKEM4+ZNnLwj5wFF50yq6M3/efH191836qXVu/90/dOHDsq9aEQc1B8F00IIpo7pS6VDL2yuuWoWaOHNJ5MlVW41aV+Sy9oIlDsvpQhVIWWdl8pJh1gDAgIuffgc+btj/P0IHIEzoAj9A7KVVsKr67h//F5I1HCyCelRhpUZLxQyEvfZ7mC39vHu9N8RxtNGq/VJRzdgEKeGMdinhUYQQXpJWayReNPnXDIoRefXV9Z0dPTuf3m25qWvMjNoipSqArkRpxCdTiym2vFaAj24UaoYi2MAHXiYSPCiDePb7LOOWFcWYKkJxDnnXHKa/WVr3/pO4cUbGfnpth3d9GmXf3fudBfuzHBNS9QtEFCj4EVNoeJMgiglCr4eQXAiClGSklfiP5cbs6cw0L3/PaNm39bsXpzTd5JKM0Spq1pW02+ZUZj8vxTTp4zKwoA0glYEcgYMiDywxLSXz5nwrxDY1yQ8oYGEKV0hjI3WNSfiJWlkW9fsGDx4U2XXP/kqd96+LEbzxhb9yEQc1BwQQQijEfCjVXRLbv7YIhzCUpGdQvLywq0yUAkAEKSQIiE/RnJUAAnIhT6pudezP3iTyWuX+XbmsYLnjKZLswoL0uGVmzJX3OH9/PLDSYQVXFclZLcWPOr30YffBoNjpm8NpivUCGlxVpvvMIalyJdA1IjCrnEiEf1sIPiuXkTTv3WFytDIVBuSXVd9Nor93Z01b21zg9ZqBQCeiA9aVsQI24omYPhyQQAoH1VAQCT6UKYBd3oPenwQxqrSfoY1My9whGzD73z9OO77ng4Fo0WkCUeeqFXkJ7NChQuEQIggULGCp7Zn6Gh3W8gsGfbTtHdUQhFUAEAA88ZqCqJJePKK0xqGldzy83P/vSmtr88VqIkgsukCts0bXWmQkN0XTl/LuM6SHe4wwikhawTzjwNQAalAxgy3BwQGAJDIkClEAiQkZJS+dPGVC256ayTrnjw0h898cTNnwyZB1uPPNicnyICZDWlobbeLIBkrAhYHbhWVuIpYsVFHiwr1PpzblC1ISDfrZ09NXLXj1puvGzJMRPfynTabqbbSecGeyjTx5JW6I213m8eVFzA0MoGxnO+3f/8K/HdrVZbj5HNW8I0wtGeQybHFkw3kEtTH4ZWMM0cmcHMtxLGlEs+WRkKSd8GROXbVeGEdubiAkc+5OhIAMf3hFIoDO/9h4kTmsIE4m2j6yoPnyaC2QncZmRA1HT8MVstbiqyPQcsxpa8prf2k86x6H+Dh0TgGS+8RUEGivGMk8/e+WASmIukGGoSPQk9xx8RNgymWXuam7ee9/l5f37oOEWTGJsIcgpAE2K0byD90GNdF3y18ytXuR1dyI19SjEYLuWSksNUP2QMuC657jLu+r4ChVwHYQYcUsGZ7zuVpbE/Xbd4056Bn961jDE8SC7ywW4cCZqrTEVXbe/3fE8TAoa4sXpJssAoPjKTyxhm8i5DwGL1OFpSPqGkfMKYsc6xx7644P7V1/9yplL9qPy8FyPJ4gnjnuecyU3WcfPAt4kxRNHfscfq6oVYRHEkIoECFObmTKwJh3q8POnGyNygArCE7knqOmzKqZPGkXI55wCAjAFRYtrkbCph9WVICCQiJI88kL7OdZeRQSBh2HggJyAghaAR14VBALlZE8aVJUH5OKSxg+zGqKamHZUpbE1LIaRXCBtRU3INsQCqaCKVsi0z9vIy+8Vl1rFzfZK7//jg5OfXaBHLc5WpNEnynZM+VvfxIw3ETcuXDXz56vq+LEXDPpEg4iA4MkSBOmhmVJFnL3m2Zc36ilv+MzJtMgSGvtihgNlBCAhM73My6VXr2NIVuGU7dvcRIlaWRY5eED19sdAMkr7gzPecKY1V3zxv9s/uXnXhSVMbq0uG+Ub/BLgENaOSmJHPe9mCn4xqAKoIl0TCwZGlCQKQ4f60t3qTjdzu6Yb+frerR3b1yN2tqrZm8Q1XvxANrb7yJ7NBDaKnCgNxIM2IqP+80xtTpzXUkGujDn3N26K9gyocBiUZYRhZpjTBD5vCAFAw0MTImA4Bw8zYK1jJ4TN1YEQj6CNI4WQyXZLErgHQBBAgkE8SpNS5KBAbLkcMNQUIwBToKJCJnGayaU0msHc1CQggY7GwTCbl7jQJyPh2QgsxzQwp7jlZh0lAQiCb3AgI/pM77IZqc/So2pOPb89BeNUm3bZ7o6GO2VNSpx1dX5ba3ry547KrpuQ9JxElX3LCMBqWHta5AXJIZysfypPpnr6ez17B/npbqKEBlDuMGCJCZD7yNUtf9//wl9TytTyXZ4wjEwK4vmYnPrU89+gr5s1X6xUpUD7jqEhdesqMWx9ee/uj635y2dF0EPzwg4VLMFCpRNh2/YLjJ6P7FLgRi/isyOhHYL7vDKgeY2e3e8EV3Z4tfR+lDwTIBPec9IQJ3X39Cxed9Gh3d/N1vxkbiWSlrwoDSUTD8Qo//AP+5ptcIAHk12yo9qVCBAAOXCfsGlObGF8PoDgXIMTQtBEBCOCMRGciWj1x7P4UalBa2JLJKBXhTQDogwLyEZk/zEoAYMACCgkBEoLgAoDl45FYfVVQQH7XcBAJJkgXEjxi3JZ+QqkoM7oFrwLsctMeEgJIklnuJnr6nG/c7P7XtxJ1VcY3zuvpTQ8MZFjYmpqKx4XIuPaWH/x4ZrrgRMPk+4x4FI1wKMFQd6xwa2NVpjKlOIps3tjbXtkRq9u7q/+HvzD+cBMb5gATIWAB4Nk77qj4zT31g3kVDlEipike5paphwUTIDRYs1t+77f066tRIEOQSiajkUtPmXLDn94qLzGuOGeeVIojwvs7MR9uF6PByfVlJu8A7LN2RijsimKEggAuKpsKAMAYMtNgzByKChhzbBaymOCgvBPPu/ChbTuTdz2ZjMdt3x/ID8QjJfrqTc4t94WuvNAGX63eaArhAyFhiBnErPycyRXhMJCHjJPgI1QCaUwA8GxlSWNVGYDc5wkiApGm6RAOjyQzBC6VQIsQgp6zIqe4CB4GjDEOCtySqFkaAxjhKwwhRipJvk9FNw6U8ieGYsstqs6IGHkDfl6hAoSC7+q6G97Tmr/8RvvmK6366rqSCJTGAQikB8De+duS2uXrWEmp9H0kFgItHIozZrQ21G0/a2HZIRMqS2OC83xnT6a3/62tO62la8c8/YazbLU1b86wSZJMe+zW3476xZ/G6no+GgafQr6IWlFdhAhEdySSDRtOqlSsWF/xt5ejZx4PvsM5U9L99vnzAdj3bn3D0PmXPnGolOoDdvgeNFwQAaCqIoUK8/a++QAAIxRKc1Hc4wAAQ7wgFUSjcjiTRlxJ6fuBL6wredw3r3xm8/aFq7ZjOJSXHmb7k+ES477nBpuq2+eNt7bsREMHSQJYVJj5eILPnqQBBbpDDaV5EIgIdaYBgKwsieom7Asmi9BgyEHThtFV/EyRFqykId4SMjZ8xCFTxBgHAhWNGJYGpEbySYkIkRfsPGYLOjKPgpBQJRVaZy3a+MKyyZtdT6OcZ0smJVMZN8tMtPa0OV/9uXvT17SmOnJt4AyRZ3w789dHx+mWqxQCasQjRoih3llTvfvyTx5y6EQLEJQEpq1d8tiEPz7VNGPW3imjmy84qbw/P44UBCfZcOO555+xbrlzkhFKM0QpTdJioYTGja5U2Z7F881j5mjVJUjQ09oOmhYBICIWlFZAfeeCBa7rf+c3b0xsTB0za/QHxNUHz4YgAPDsrOd7ebvoGgaiWabU2HCcEjCvNWIx0EpBLwUtRVoZaaWklZAe9Uj5PgBK5ZeFY9N/ePWyEsv0FDHMg5vOpxl5xu1/a/757+JZmzgHUibXGTMGGuti4+sAJCAwNqyGizQcnQkgZibjOhzgxAQCBcofribQEGokKRjJeQk46Vj8f3AKDFq6xjXYn4wMADzdP6Cn04wHmpUYQsGX4+fMMK/5/K6SSBysMDeYYgjgM8rYOY95ZnsHXX6jt20v6iZIiUzbtX59bNNOZpmgFBCFuK6ZUVczdp95zMxDJ1mKlPIVKQBVd9pJq0SBXnxtzJ+fmbuqpSSVIGQEhEy0pXu3/uJ38yTLMORKasQSRkzj1t5RtXu/d0njZ0+tlvnxzywd/8fH5r68un5XpzeQBs0ERUFWRknv+5cuOHJWzdd/+fJg3kaE98v1HyxcgrVVWVHCdZEt2CM/0gzdE2Jo4sAgUaanKmKj8uHSHZFEczy1tjT1dmnpmmR8SyyZBt3PuwCMMa58e+q4yda3vrTZzYWRKYQc2YPeoN7TecRLGyPClEQMmCksAp6dNT4eiYBUUEzw4BAREhFQMKEQRVGNvotNAYhKSZazcX/vgzukFKiiSiFAYADEgrCn2Iii/VnqAACBV9ixtyU5kIVivRdRkRcxlWU0TZiofnr5nkQ8DlaYmwHpymVq0B70mWv09KkrbnL3doBuAEDnW6tKC47PgAAFMFMPg2KdDTWVC2dZQAoUQ2SMgfIbq0Z5R8/toMGs5mg79yauu0N2dCvkiPylRx+dunkntyxSkgjC3NS1UH8s3nfFp2YfNiXke2tWrX/mp7f03PRffT//lfela+Gcq9wlryiukwqcQ2LIf/blI1s7039cshYR1Xts74eDSyC6pgGg6wUMouJy1HQDRFHVE4GBmhGKKNBWnXz4wC++pW75rnnbdck7bojefr28/Tr3x5cbYSNwBRhnJN1jzzhz15nH9w8OalwQUE7ZvfaALj0BqAA0YAZq2UgE50zQAdQIizIMCgbIGZeI6oCFeUTPdljfIPDhkgEwQECuCDTCIbofIiAoxQABQRVTTaC53oEWGgFAy5q1lbbrF/U2Y5LyqaSoKgXyRs+eIW/6+q6KkgSYURFiigFQAf1sPk3om51d8O1b1GDOB3A2bo0gD6y7gbowTJKQmz2uvLQElBx+IKWIA4SnTkgD2PaAbzLe3uf/cQlnWtrJdT327ARhFpREAA1EWI8oia0nHT5u7gySrmXqx3zmk8m/3HjfxGo3ovdFpdeyk3/vFvdPjxE3QCnGUEp3fH3lOSdMvP2x1ZlCgfMDFxM/HFx8J698N+/I4SEDAKEJFWxsAQgKvwAErjemqvrIQ+bMmTZl5rhx00Y3TRs7fs60aYfOmVFSEgFSQ5uRQCd1xJWXvz2uhucLwLhiZKPfKzMOeQjIGEcJmdHVyaljAWQxawmE+5Y9CWCInBBJHPBxuN3Xz3t6UIihYiJwQBDCJpcTFKtJgIgMitRaVAAkfQDQ+jPk+cBG6ixgnOeVN/jmikqmu0BIgBxBUW50XSgaASDy7cbpk/mvrtrWWBMnM66FGSGgyoE7mE+TjtqmbfSLv+ZAUWunEJwIGJHBBDLNE1xMHG0CjkwsBc8aq6oqaEKCLOT6WdSUL62ETG7D1uZU8w7TtFQQFqDOmT6QKomfvMAa2mKjvPyhYyeFLv3kq14+BGqQ+Twk+K/u815dRdwIYkYiuuDEyR19hVdW7YX3OUXgoI0RAgCkUolIKJTLvcsYCSE8wYbAGCgZxQG97gFHKeXZSjpKuko6SjoUFDKGm2WolDeqpKLm+5e/Y6BBMrAyxQ3jQEhIGk+2dsW6ehUwCLSkApQj1WXRDuJ7ialEQJDbuVPvHVBiH+tPIAcubOULVMVQCJEhB8RifhrBlR4wMjt6VW8/0L5ATEkJqK1e807l2m2mYQSMZoO4zw131rgQMlCEnJNv141tsn757eaxdWEw4iLCFVcIOXLy2QEW1bWn3si8uIyTLwADiiljDAhdS7eqUvAufBZFC1tSIAEUfBtQib50YdOOnevW1WdcjxWrF7rQwcfM1NEl9VUQ0MIBkAtS8tSPn7xubHXBcRHAdnNCIN32oLRtQM4QEPxpYyvH15Y8++bO94PBh9MuQgjG0JUjH4SEEEobqt0gC85eAQRmO8QY44wxxhgO/7N/Dxgn31kw/xh78VF2NvfuC1AqqcizegbUT+9SUgYdJlAYHCg3dFmAC8b2c10AASWC/dYaw/ao2DIigc4EMe76jkEogZCQExISMKYIFSkAspWnwDd6+nBlMyAjXwY7MRkwF2jDnffNzskCIiNAwJDCvsoyfc5EBsXNGsi58u2autrITVduH1UR5laMmYyYz1RW5d1CDkiqu5ZgphCkngkIGANF0jT1ZPg92SMAAJISFCEwn3ylXB2wf+POzo2by7jmkwIATkwIXRGxKWNCyIf37yEikVcSjsXnztnj+hpi1ssrLrXmPWr5BmAcFUlFgmuHTalYvbVL0oEzvB/yfBcpiXzXlyN/xxnjLEikDv2KCBAwW5CgPiDnU7wYADnPuYXUrjYu3sVXQiAXZcbOgAH6m2u9e54CoRe3g0j53lhlv+oPEQHj6WwaXlqq6WK4ziIITWFmQUnfFqyoNjTkgBwAgVAhMQAP/LyTFwz43U+4mQzoVrAdDYS+5KEHZr+8JmIakkgBGUyssrO7j5haNaoSlBzuBuOcfLu6tpZ+cEm3ZUb0qAGcEXgg83YOOGnbOnjXAOlieMMbAJBgYGj7K5eAHJLOGF7g7Cvpu4zznj0t9q69caH5oBBIAOOMebqmN1TsNzrBNo1RUye1MJ+jssF3vAKXPry1Yd9wAUxqKm/tzvSnC3Age/Th4CJdR7q257+rFcY58OEHBhVsNkTkOcdTHoys8B5ISClA0bJ2nblmk7BMIgVASCCAAQIhFcjL5wZ4SPDfP+Zu2gpMI1/BPmOEFJD432trlQTkPU89G920i0wLi3w/EMi4HupSri49BsOuLgPGgTFQiimgIFLzCj445o698vKfOys3uAWnOzP4wv0PNN7y4Exl5IgYEAMEpm3zC6nB7hATpEauJUDOyXcaZs3qOmYG+WgJkxECoo0uOLYgQjXECASgQEP4vuap/RZD4NnnWtrDwTE7gU0U3O7po74BXXAiIECGDIFJTdOSMYARzPViagAqqqr7DYakCMmVLjCA3W0ECoZSE3XlEcfz+zMOwAHM4UHDBREAYrFoLBbL2+7I6WYMpeD78hfBHh+GPGdLz4f9XLb3NkxAAD3PvVxq+0UDrDDGLElCKmKACtSgn3ednG4X5E/vItdTQODJ4t6gwHd9T+RHvo/C6uvukL+5Uzf0YT+fKQgJCzRrBaWNYq42oBsEOWlp1tcPhkPCd4Exl8l0ISPBttZt4V/5qX/Rdf6l1825+ZFZg7KX3IBCElLCUyJUGrceeya9+h0UJvj+fp0RRDh7fAFB51rglPlAjm/rylcMh3I6SKSAo54p4EAG3r3OEFECFDZtiSCTRRggMJEZzFLBHTIcWEwzcq5ZBrxX/QJEYzFH14JtQEpKIGI5G0gOszgsnUtJuYL7nlsBPqx2MU3TMA3He9cCYsiID3W3mMxVgMgc17edA/V5SJQipVCIvlwaX15mmoZSigA11KJobZ1/yPaYYUgpGXhMZeyM4tJ4Z6v/p7+pkIGeW2TcYVD/peKEK0VSAQFqViGX6fnGNdGWHmkaw1v/w8wIW8k+AeuqYhbhsEkjIkQAO9cwaXL/F8/tdj1DSuKYR3cgn7ZVnstCaNvOqq0tETff6+U88iUHJIy6tHX+bEglhOf1f+sGp6cLNEu9CzEEgL7rYUCnDDqCZJOrKZ8AFSgAICCSEhB43obtrUV+zFDfgGv99iBu3G7oxkgbIX2JalgVFfUUUwrfp14oNN0fynooJAKFaohvAMNqDg6gWIK5ft+53E+CLyCllL+fskDGgfPh5auwCBdRsH1nBFxoSPFICVICAHBDcQ2AtyxfHt/ZAoYBREgYZXpBM2svORcv/VRPNisYR4ACetn8ILM4v/tJ77m30NCLewyChoeHlTEyLB8xvWJV52e+ZC1djdEQSBnE3lG0otFy8vH58ZW1s6ej7QBjVOwaIRERhAnnX/CZjq9f0gWo52zOweaqz8/22P39crBHZbr8bIF5UqDpyqgtNy06hn/l02WCScNke/Z0XnJFYW8L0ywAACnJ9xF5Fkm+vtYicqQbmBJCcJUyCJxo1CFiAIToKEnS5Qhi+XqFMOz2BTu32pu3xve0o67hPrwogzHJh1V7MRnFPJ+yuQNOo++5mvQDfSqBSCqlsWJZmwCC3fmMFfel/+NwGQYH7EelIUSk92oQRM2WXt4J+PwAAAyBCQh4OsJUyOzXl+Uef80DSD/1ckJCMbOJIoQiXV8Tbayade6ntk0bK/IFYpwQslQo2APMc/RbHmD9GRIcilaEAAiBSGDvQ0u6v/ytznMv67nwcly/lWIR3/eBQCcR12OJaAUn/miSlX/hU2OTcduTHECQ4kQSyCdQyHwlo5LN/dwF9s3X7pwyzs7ZvJBD6Sjl5pXjqgIpR7NtM1tw4mXrLzrP/PbnDp3QRJEIeS6LRnHj9s5Pfb7vkcelJBAmapbNtZ1/ebDp9bU+ejnpDOUFQSlJhhicPtGWKjDCLvjSttHQxLL1srMHmEZSARFKBYhdT71cn5MuL4JIkQKiMDLPMCQFuWlSIImAeR70Dh5w+gYHBkLOiJqalBANIfDhM1f6Bx3GWDRsBJO9n/wj5+rur11Gsmth2HVkzPOk6wFDYroCpTyPcoOyu8/Z1eqsXg9vvVOyZk/u1MXth4w13lxhmIajJCNmcQGgD86YWFkSjTEt+dWLd1z2/dFANqBClfHypjBFlxT5QRB8eFsJEYEiwUW+vnL7spU17Z3JWAkzIyhBoB4RJmomCGsA6anacOiSs4+eOulvLz4TId9hLA8mB5n0XOHbQFqYSOOoAT9k4VGts6a2Pv2KfOH10PadRibHfI9Qk6bllFflZ0zjxy0YN2dimcUUIU4a67y1TigF0ZA+MDh45XX5P92vzzuEJ+KZ9VtqX3lHZ9hHjg/+8KhxqXKlJWWnHd/7+pslklyGHqi8m43qmtYz6Nz6ALvmi1zoABJ1fdOGdTWPvBKPRAeUzwAUkFQuKJUg5iai9o4erqGPJEkp8pkk3N2531QFoXpHS0uJI1UYgQAQQUqqLgPAYg4boKU7axksHtFhyBX678LlvecsjkSMRKWkB+CXemBd85sei1zP9V0bcjakM2pwEHIF9GXMjGmRlFeSbHnxtYb2Pj8WA+VzYGFu2mZYHjY5yjTynFkLj12y8ImaZ5ezWJgkOkgZO5MzQshgxCFECADAUBbsujmHqKfv2Xr/kr2vript6y91ZEk41ImhFs63RvS26Y3Hn3/StNGNRGRWVv9n9bxtdVPTyDXlHZFunSXtVZGKgXbecNfr5x0/sbYyXpOM15xzRv+ZH+9r68539Xq5PCHXotFoZWl9WUmJxgGk8n0moGzx8f33PlZNYCsFmtCMqNrSbK/ZyAhCmuaFQnkiwn3RHAM0feiaOXHKgsPfmdCgvb0BIyGfYAAdyvaFjbDx0NNuacT79Mclx/4V642b72m0WRcb1k3g+x5oMulJraqiB3dUA0gCCeT5jolh3LBDFikZRQm2rreu2XA0MS+okSEQAoyrK5pHRABo3t1bVRaPhQ2AA+RA/gG4qPdmj4aTBgQgkbJ+Xma6fPLtji2u9ACAMQTGgHMuOMQijLipRYD0HpO7z70SYcIFAmA6agK1nurK6JQmBCWRLNTGf+XS9cveOVRhnnNBpKSXszOMwUhdGQBHIQBRfaqs/kuf7bw427GrbUdb5zfuX7Olj+U4l0KL7DZW/WH1NZ+1xtVXvjZY8deK2VHJyHeBW39JTbyHIFNwoM3nd6185KUt999wal1FAqSdFDxZXwP1tSMeWQJJkgoQGOeg3DFz5iz9+DHhB57QUuXkSyYBrRCGEAAcIlBy2BclQEJM2JCtrnVPP260Yb61aNFzG/vKQlal3V/u5QYZuLYfYZb+27+6T77uGlayrTeMMsek9IvntRCiTZ4iGck4FYc17IiuaLCVg6AQC75tWmFt7TbV0ckrykD5wJCIALWOTJ+zfFWDHs6TQkAhkWIxnDYGAAgZZ0ik1m3vmjy6EoEdkIv5DxznsP8pjzTkYtEQc9Emt9dPD6isExIQC0E0BOEQWAZoggBJKiHJAA1iib25gfJ1m8EKnFxm6gaAyExuSlaUgPIZ5ySdaROnZT61uKO7g2dzA7nsdkabQyO5UQDDFlARIJLvge9W6Ob0CeM2ZiOvtGuDpOmEYc8vZDJPvd16ze+XOp67dHVL2HU/f+LY+6898YsnjeW5fNS3L1hQc9XZU2dNKN/akv/rc5sYExICdpkCUKBcz7NJOgAIKJBzoqBCRkKq8Vd9vWXWJC3db6HSSJIipaRUBEoJUIyIgASRSTLh+UyE9nz2nMYpTTf84aVrXnS+Pen0S0d97DNNpz9aMsEgN8OoR+ULmrL2tiZ37Q6DnXcyaSdrgwJAFRxqpVxGttGfHhcv2zl+tO3YAZXYlr4rHa2/X979tAqUsJTgK2T8sYcfWrA3q2k6ERFjwvHVxCZWX0PKIwBAvrdzYHtLZt6UquK8vkc+nHYJ6nD7Y45gWMsWD10AQGIIQJICE0lDGSMCQEJLhBhoPaMqsl2tVVmHQpbu+ZaEMOqAupw9vlh5QSQEJDXvgvNX7umOlFbxyWMTY5pie3bgD34OIypEBMQJmKQAzgoAAfd29v36vreF9C/9+JRPLpwsOK7Y0vqNW97c1Z5Zs62jP+sYJjvr+PHj6io27ursHrTP/dj4X37jRACQ8uVl6zu6++287YRMlre9jr48R6xKhXTNBPBau9K2KxMxvTQWA/CkYpxDZarcueVny792feX21pCmapwcV1IBSsYGmY6gor4/oFl93DKQFT5z1uHnn/TU0o0/++uaskQ4qYMC1ofWz6vmzs20NjoDOa61As9YFgdmeU6Vm15Xm3TShaOztgTZq5utWqRTD5X5bFzHYNcnjtu0ctN0ghyQZDJnZ5PhEvHgC3ZdhfHJRQgoAV5a9nrs7mcWGNF2P4MIAhhToE47WmccfF8BALCXV+0lUkfMqAEAPBBD6uDZdAAQHOrz7uIsoFISpR+klTSFAgUHHnwZAUlQUimJQRgNDDAkjLARAWG9Naaq5vEHWMHuUzKv63osqiWi+ZKKskmNCEOnHiMjkHUVVZW33KQAgrN1tg92K1+Cvq9kqIA0IPCH6bjEGL/10TUdfe7U0ckrzj3U0i0AiIZFxFxuu+qNta0DOVmVCpcnwkqplRvbheCWUJnBdFdP7wvLN5eXxF5Z07bo8vuryiL96fzerjxj0FgVPXJG7eqtXRt29ElJ4ZC2YFrVVRfMq0jGNu7o+MOStau29XZGFsgxhSijBid9XucaDvKO8lndRhhJVbm5bi3SxSyFVLtbO+3+5Y+/uSNimsfMrr7u0iO6B9KXXP9Mr6vfVD3vxIGtzyXHrA2XDZIhQUUQGrM99Uc2LH71wdYs3VE3Z0W0qg9NSRBGqlrvHTe+jk5c0PDoK2Ys6iuVI4cXBqJWwvj53d6rq2nGuK7sYMULb5wwINIyR0jAUcs4NH2GWHQ4KI84MkIA9cCLzXMmVjVUJel9joT5cNol0L2m9q6gXCoZljypxZkZ0ZgApgETAEMMYfJASSV9UhKAuGLAhIPGOx+bn67StcaGtSedaIxpCI+qFmWlZiQUM4yySJTIh6HDahGAlNSC3R1SEjfy/emI9AH1dytMUlISACnimrFpV8ejLzXrnH/h9OmWbrV1dqRKEmHLKE+YLd2FF5bv8jxZXxFLRMOu52xr6y+Nhx98aevzr661PUQrqWnU1p1Fhrvas7bnpxKm9GHl5p612/vytoyHdcvk7T35Pz25paU7u2hu/U33rurqczhSPGxoBu8oeDtYam3DQkEyTYaybaGxnUbUte2yEPmSNqzv2LilK2SI/kx+9viKytLY7vaeHW3pSCT8cqzxpcTodMHTCl7CAsZZZ97fLSpia/02Nq1tQul6UcJz2YhFBucdtrfb0dbeueXCU48paeuauWyTSMQl+BlVUHkVNWPmm+/A6yvrGasXPOdl8sohDYVHqIXY1Z8XhgHSUYSMi5VbWpeuafntt08AYEodmLF70HAhAsS87RYKbjQ08gAt5rqecNHQkwVkWQlZojx4EogpZSqKKGYg01Aj0HykwZDWVV3WcdSc2kXzz6wtzV/wqQjfLyWkgFSwqY4zDcgb6XMVXzeQL4xIVQX5T0ICT0oVUJ+AfvXAqq4Bd/60itOPHp8v5G780ws3XH5GyDSrSsPbWnO7Oh2l5LhRJQDY2jnQ0ev6Sn3tnLmHTqx7Ymnzvc81p8Ls5u8eny+4P/7T8i+ccegxs+s9X/32oVUPvLD1ghPHn3vC5LKEuXxTy3/8eeXKzX0rNnVLn+ZOKTv/Y5PnT683Ndy8u/vOJza8sLKNNN4Qgx998/jmPb23P7r6iovnzZ1cU3D92x5ZveS1PdWp8H9cNu/wKXUk/Ypk5E/fO6m5re/WB97xJC2eWnHWcRNmjK/hjHa19t//wpYlb+x8K9bk2N74iPf58+cumFkfC+tb9/T+4fE1S17btX6He8J1V6697pdT3lynhS1PiIxynUK/yXVN0xQpx3MdkkpHLe+CFOynXw/NmkLSQcZAKQS46d63GqrjJx4+hgje7508H0675D3Xcb2I9a67DKVy08ctaZROdRkvSxjJqB4Ok2Dkul426/YNqME8uZILweMxs76mfOzo+bWVcUMAUJwIpKMI9uUlA89R6LmC/fzbzaceOZ5zA8AbqUjUYGZo30HgYhdT69zzfQBT099cv/uZZbvDlrjsjGma0B5+ZsVTK3quVQoAa8tjvuzSOAGwSY1JANjR0jeQdRKJ8HmLJ1Um42+tax7M2XMnly+eO66lo/3OH5wwuakOQAGwqy88dMqYks+demgA0fqq0h0tg795eKMh+FFzKm751vER09q5c6ej8SNmjD58Rt05333shRVtJ8wZc/Ts0RUJvmju6fVVZYH/9tOvxJ9fcdfUMclPHD0VwCdFDTWlDTXl9z+zvKOvcPXFh1x1/nwAnsv0GLpZWz56wcwGCc/87ZWdVSnrT9edOKamoqu7fc/u1rnTJmxv6Xjgtb1yd/vot3DbVy7Z0vRC7WMvRdKDzLR8DXJkg+8iECmfXA8GPLexMfT9r8UXzkfpAGNSKi6MZ5Y3/+21Xb+/elHEMoZPIP/vwsXggjPu+MHSDsjPfnmy9OTrr8r7fkQY79dckGgfgVhfKRm8ZQURudj/FPiC43znNy/f9uiGE+duPP3oprMWTjQNEbhPPgANZnixxlOEWFCCMKVkAKTkr+5flc76i+fXnnDYWMfN//HxtQqt3r5sPBSur4wS+VIZlsnGjUoCwObdvTlHTimLJsKGUv47W3oQ2fi6pFSqqjxl9PV/4ss3TxnfcM1lJ5fGQ5879dCf3f7wiyt23XH9BeWpkvGjkrZjjyovuflrx0RM4/s3//WXD65PxIyXbr149KiaQyaW/+213ZObyqSiiU21O/e0fOzSG4+dN/nKiz5m6tqkxvLn3th2ReEPP/vOZxiDr//kL83b27f24OIFY646/3AAvOWuJb+6b3UqYdxx3afGj64/b9GEu5/edNH8iWNqKjbv2H38F/7gkzG57llPaSISObR1q/rjO5FrPzfl2qtaFh3bs+R5c9k7oruLOR4BAGMUCskJDeZxxybPPSlWUkoBVhRxoXf2pS+/6aWPz2s469iJH4CVDwGX4E0y8bDVUJ1cvr7tsk+8y23QSemCgXIDBIzESXBIEcK+LWQqOGRb8OFvJ+X1pnN9g4Wc49mOv3Z79x+XrN/TOXjtpXOffHPXdX9865SjxlmmHhzRLgEonWHwLg5/kM5w844O8PSbW19/pyMR1b985ixE/ocHly7dPGiYxq729OjailEVUcHQ9WVZ0myoTALQlj19UrHRNRFTNwczmT1dWY2zCfUJzlg+X7jk2gefXy9ZjBgjxszb/vLM9fduLkmW9WfdqnJs785kC+65i8cnY9FN23c/s7r3sENnHje7qmFUFaJctWFvJGRMqE9yht09fed/7+FVLaKizmMM87YzODjYmWO2Ucm56O7vf2Ftrt+OE8gvnjGVgC1bvfEnd21IlDdu7U2vau6Z0FQfMrnGWEnUBIBUIvGpU458/I09m3qdsM5HWVR/5Ji2E88ZN21cFCA+f352/txcZ4e7s0X29CMgj0TMmspQQ21IMwBUcOihlIoLLWfbF13/JCn62VePZYx98JubPoR2UYo4Zycf2Xjd75au39E6ZXSN6xUEK77mMPgSFryZasifIEBFQxYDAncEOXIA5vnOmub2Vc2dS9e1bdrV19OfyzuEQIqUrvG5k6tvvmLhvCl1Bdd/dtneWFgfqpeiDx6kM0FpcLh6GTyk8PxB37v1oXfyrn/G0aMPmzyqkM93D7rnLJ7iuZ6hCwCorYhaBrcdVT82noiGPM/Z3prhHMaPSgLArvb+joFCNKSPqSsBgMdfXb9il19VEpvQkADQ+vr6f//EttKyyuqEqCqPAMCGHV3xkHn87AYimthU+9adlwUdau9o/6+7Xnx9Q09lKlZfGQeAu59cvaNPVCaM8Q0lANjWlW7vy1s6mzOhAgB2tg7kXRkyrFTMnDG2HAH+9vp2MOI6802DJeJhAMjkXF0XT762+fwTxqZKUjd+eeGFH2+/5nevL9vY01AVOu4bp5VFwgA+KYXKiyBEKqqhoubdcyjBd4ghISpJQhj9g7kLr39ydXPXw/9xRm1F4u+e3PEh4MIYI6LPLJ724PNbzr/2qft+fPK42ooD4qqoVA58+q+/u33g2bd23fn4us27+yJhfUxN/KjpoyY0JitLQvFYRDBVWx6rKYsBoFTU2pWLRTSGQ7QjRN93MJ0NaNgAEMBIkgIlSzne9eKGlc19lSWhL501EwCtUOgHXzhx5HhVp2LxiLG3Mz+hPgGAbd2Drd15yxAT6ksBYNve3nTeb6iMNNYkAGD5xi5dMzzpT6hPAcCGnV29OQLm11YkkpGw7ztb9gxUpiJlJSFEevDp5Ru2teZzhd2duU17B/rsiGGGK5NGTXkcQL29pc80DN/3JjaWAMDWPf3pnB/S9fGjSgGgeU+PJ5HQqyqLxyMhAGrpdgyd+ZLCljapMQUAG7Z1MGS7e+QZ37jrC2fMPG3hnMmNVTd86chTrnx0Z3uhvzdXFraUUsEEgCIkF2jE3i9AGuLTM6YxhkvX7fnqz5/vSRfuv+G0eVPr/rlb6gERFEE8bN3+3cXnfm/Jwi89dOmpk46d3RAP6139ueaW/u0t6ZauTP+gk3c8S+epuFVWGi6JWrEwUwTpjGzvHtzaMrC9dVApefTMmu9dcvj0sWWVpfH3fpciUkoKzvvSdipuATAiHxEAmJu3cTDDGJP78IIe+cBVf2v/Hx5Z50k445imcXUV+UL2b8+t9CUwBgXbmdBUc/icicmokYqbu9qyExtLAWB7S29vxi2JWk01CQDYvKvXcaGuIlqeCCvlbGvLMMYEh/GjEgCweXePLxFIja1LArD23oHWrkJleVwTDAAfeGX3/c/vKElGlAIrlCxLGH3pQlNttaHpg9n07q4cZ0wzxdiaYlOOB+WlekNVAgDe2dLRm87HoyFDC4p/RMj6M85Axv786ZNHVSSVdJ9cup0QfdffYYfPu/6lGzrzV160KBkx4iHR0e/2ZR1JqIg0MRy3EryLD4DD3uGmXZ2/fXjVXU9tPGRC5d3XnjShodxXShzEG0o/nKvLEBXRuLqyp35x9k/vWnrP05tufWgNA5CAYUuUJ63K0ujomkRI53lXdfZl39ncXXD8bN4BxHBYL4noU5tKLz5l6oLptU01qeFmpaKR5/cHLz4QnANQb7pwSE0FwPABfejlcixXIE0AMmAB4YUkIAhcngm1Ka86ZVxy8lQAuO+plV+9+VXTtADIdv2T5vfOmzWRMVFRGhICx9QmpaQtu/sKDk1qtCpKw0SyeU8/EDRVx5ViXX0DLd0ZRJaMaXUVMaVo485eZEKRGleXlFJtbxnIOf7AQC6Ts8Nm6IpPz+eaSUCNlbF502p+fs+K9m45blTCl2p3W7pnoABglsWtmvKYIrVldx8DHjG0REz3pTx+3tjqitI31nVs3N7purZhhL981gxN0ybUJ7569iGM8Xsee/Xl1V1XnDd3THX4vuebp4yJz5rWJDjftL29o6eQiJr1FTHOkDNj5eaWu55ef9jkmkMmVFSVRsKWBsg8zx/MO3s6B1du7Hhy2a6la1pjYeOHnz3ic6fPNDQt4LgcDAA+dIkxQExZMnLjV0/43kWF7W39BceNR0LVpeGSmAm4H62GpKKC4xJg2NBGRvOKVHB4f+DQ7MetCEKmbMHtTufrymMQOLYEAGj39BodXZoryYXi6+UJiOycx55pLPMKzhfPnVNfmcpmBn732LpUZfXUhhgytmFH/6ArGEMAUV0aLo3rs8dXA+CWPX2+VBPqS8JmSPqFne2DmsZnTyzjnLV0pgcGfcW0MTXxipIEgGre2y8E5wCHTKrmnG3d26uAZxz/1/e+fP1lJ82dUj93Sn3Q/7b2lr50xjDEYZOrBWc72nrzDmlCjqtLJKNRAHdbS38kYnb1Z3fv7Zg8dvSiuRMWzYXlV/21pce7+a6XrrrkhLlTRs+dMhoAgNx7Hnn+x/euC0ej46qscxfPOm9xcDIoNG/f/qNbn/OUfvScmtJ46KWVO+5+asPjb2xPxKyHX9rq+lQSNWJhAzl3bDeds7N5aRh82ujUdZ874hPHjk/FwxC4pAd9Nt3fP/nygBJEQO91i2joJYVYrBjsf0GgSP7uScDBcZvbWnqP/sI9//XN4884aqKULkMA1PauXbPnlj9ndUtFIxCygAsEBJLg0zXNZq+nHTVBlIf9XV3OmzuxNGq++Nuz97QPLvraQ9UloSMncIPD2zvt3pxYNFWQolc2OX15vbGMZtfz3oz3+jYlgR/SyOsSaku7v7YVEXhVCRzepGVt7+VNri2FLuDo8SJm4dvbnR29qKQk5R7awA+dXBmxNMdVO9r6lm3s7fVjutAOH4upMK7ZbTd3cySoT7FDR2sDOe/VZj/vAhE1JOTiwyrCOl+7ve/lzY5Ew3MGDxttHDqpKmSyTNZdvrFjxXYH9IgmRImZP2JSbGx9GZBq3tP70qquQYoiY6OrIulBd0dbf2NN4tJTpn7y+MkDmcKq5q5drf39WdeXKhLSS6PGuFElExvLqlOx4blgH/JA5n8QLoHQ0PvSikTBAx3bNcS9PvCn7yeBi75xZ/dxl/31ju+f8LF545V0eXDMGmPdBc/x/JCpa4IzhggoSXHkt9/3xvV/XCkl+Z6jG2Y8aoyviz9589mOIy++4fGnlu2VUkrph02TC5bJFYAgGjHDhhjI+bZtMyaSMZ0x1j9oK99DodWkwqbB9nTkbccBFImoXpuyWnvz6YxLpITQJtTHDp1U8eSbLd1pW7k5ACBAQM0KmdWlZnrQ7hu0FQHXRH1FWDDc1Z71PAcZt0x94ey6ls7BtTsHlOcAecRCyZgxrSm5vS3T2l1QsoCkCJimmamkddL8uu0t6TfWd3ueS9IBYIBaNBquSIhIiCfC1pQxZYsOG33YlGpT1z94bIlIKWDsn30M898V3J/LcKBr4EA0m7/fMgBATXk0GtKad/cvnlc8DyQoIJVZAiwBQMErZYopGFKXf/KwhqrE6+s6bMevSoXve7a5PBkCAkPnt171sXueWbezJeNLqi6LhCyxq3VAEUxuLBlfn3rtnZaOvpxl8HlTKi1de/md1rzjxcPmifMbyuLhB17c3N6XNwSbPjZ17OyGF1fuWtXcrXyoSoVOPXLsmLrUuRv3Prds5/a2QdfzNcGrSkNTR6cWzBj1TnP70vXtnkepuHn6UWN1Xbv/xY1d/Y6usZlNpWcdP7m1a/DeZ9Zv3pP2fFWRtI6aWbd4ftOarR3PLN2xvS3j+L5p6ONr4gsPa5g9oSaTL/ztta0rN3d19WcBsDxpzptSPX9aXSxkRMPmsDWXihgWidHDC3UoNiq+R5QfmIl7EPPy39Eu/1IJ7NF51zyyvWXg9d+dzxgoKdnQyxppmNUdyBBuGQ8yNLh+e9vRX7r/1m8df+bCyb6U4h8eob/fT8X2USloPyfsA4RI4QFuHNkCjQCBHHG0/76CyVBTpIpvlf0XvbOzKP/Ut938c4UAAL5y1uwte9LX3P4yIufCCF5QzzjnXOfc4GLoD9cZ1xgXwdFRG3d2fOKqJYdMrDj5qPFEJDgnAilJKpKKpFRSquL/lVLBbxS96wJFUpJSpIj2XSyJaOgaRVIqRcSQqeBiAiIkguGP9rUp1f5NKUJkioptEmHwSwBUxS+CYM9acC9nnAikUlIFexaK1+8rpHDG2b8WK/C/WbtA8PI0xm5/ZOUV//XSJ44Zc8WnDp1QX6prkM37fYP5wYKfL3iu5wOAaeixkBY2tJ5M4Znlu379wKra8shffnhqQ3XJP/FtPh/J/2q4wJDP++CLG6+7/fXO/nxVKmwIls752YITbDNSpAJeAwIIzj3fNw1xxlHjvnPhvLJE5CBPF/5IDlL+t8MFhkhSg7n8q6tb1m7rzNt+VVm8Imml4lY4ZDIkAPIV9aUL6byTilnTRpeXl0YgOLTt4LJPH8lByv8BuMCId8AfpPzD7+v5SD5Y/m/ABQLnn4b3Fh0gkVNM8AzFiv8zvfx3l/8zcPlI/jfI/wdqSil+ltHv3gAAAABJRU5ErkJggg==" style="height:52px;width:auto;vertical-align:middle;margin-right:12px;object-fit:contain;">Explosão Alimentos <span>CRM de Cobranças</span></div>
   <div class="topbar-actions">
     <span id="sync-status" style="font-size:12px;color:var(--text3);"></span>
+    <button class="btn" onclick="abrirNegativacao()" style="border-color:#c0392b;color:#c0392b;" title="Gerar planilha de negativação Serasa">📋 Negativar</button>
+    <button class="btn" id="btn-confirmar-neg" onclick="abrirConfirmarNegativacao()" style="display:none;border-color:#25d366;color:#128c42;font-weight:600;" title="Confirmar quais foram aceitos pelo Serasa">✅ Confirmar negativação <span id="btn-confirmar-neg-cnt"></span></button>
     <button class="btn" onclick="abrirResumoPorCliente()" title="Ver agrupado por cliente">👤 Por cliente</button>
     <button class="btn" onclick="abrirRelatorio()" title="Relatório de inadimplência">📊 Relatório</button>
     <button class="btn" onclick="abrirConciliacao()" style="border-color:#c0392b;color:#c0392b;" title="Conciliar CRM x Fácil123">⚖️ Conciliar</button>
     <button class="btn" onclick="abrirAcordos()" style="border-color:#7c3aed;color:#5b21b6;" title="Formalizar acordo com cliente">🤝 Acordos</button>
-    <button class="btn" onclick="abrirBaixaPagamentos()" style="border-color:#25d366;color:#128c42;">✓ Baixar pagamentos</button>
-    <button class="btn btn-primary" onclick="abrirAddBoleto()">+ Adicionar boletos</button>
+    <button class="btn" onclick="abrirBaixaPagamentos()" style="border-color:#25d366;color:#128c42;display:none;">✓ Baixar pagamentos</button>
+    <button class="btn btn-primary" onclick="abrirAddBoleto()">📥 Importar CSV</button>
   </div>
 </div>
 
@@ -428,10 +473,26 @@
 
   <div class="summary-grid" id="summary-grid">
     <div class="stat-card" style="border-top:3px solid var(--danger);">
-      <div class="stat-label" style="color:var(--danger);">🔴 Vencidos</div>
-      <div class="stat-value" id="s-venc">—</div>
-      <div class="stat-sub" id="s-venc-valor">boletos</div>
-      <div id="s-venc-pct" style="margin-top:5px;font-size:11px;font-weight:600;color:var(--danger);"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div class="stat-label" style="color:var(--danger);margin-bottom:0;">🔴 Vencidos</div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn-periodo" id="v-mes-prev" onclick="navMesVenc(-1)" style="border-radius:4px 0 0 4px;padding:3px 7px;border-right:none;">‹</button>
+          <button class="btn-periodo active" id="v-mes" onclick="navMesVenc(0)" style="border-radius:0;border-right:none;border-left:none;">Mês</button>
+          <button class="btn-periodo" id="v-mes-next" onclick="navMesVenc(+1)" style="border-radius:0 4px 4px 0;padding:3px 7px;">›</button>
+        </div>
+      </div>
+      <div class="stat-value" id="s-venc" style="color:var(--danger);">—</div>
+      <div class="stat-sub" id="s-venc-valor" style="margin-top:2px;">boletos</div>
+      <!-- Taxa mensal -->
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:3px;" id="s-venc-mes-label">Inadimplência do mês</div>
+        <div id="s-venc-pct" style="font-size:18px;font-weight:700;color:var(--danger);">—</div>
+      </div>
+      <!-- Taxa global -->
+      <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:3px;">Inadimplência global</div>
+        <div id="s-venc-pct-global" style="font-size:15px;font-weight:600;color:var(--text2);">—</div>
+      </div>
     </div>
     <div class="stat-card" style="border-top:3px solid var(--blue-text); grid-column: span 2;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -458,6 +519,31 @@
       </div>
       <div class="stat-sub" id="s-receber-periodo" style="color:var(--text3);margin-top:2px;font-size:11px;"></div>
     </div>
+    <div class="stat-card" style="border-top:3px solid #25d366; grid-column: span 2;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div class="stat-label" style="color:#128c42;margin-bottom:0;">✅ Recebidos</div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn-periodo" id="r-hoje"    onclick="setPeriodoRec('hoje')">Hoje</button>
+          <button class="btn-periodo" id="r-semana"  onclick="setPeriodoRec('semana')">Semana</button>
+          <div style="display:flex;align-items:center;gap:0;">
+            <button class="btn-periodo" id="r-mes-prev" onclick="navMesRec(-1)" style="border-radius:4px 0 0 4px;padding:3px 7px;border-right:none;">‹</button>
+            <button class="btn-periodo active" id="r-mes" onclick="setPeriodoRec('mes')" style="border-radius:0;border-right:none;border-left:none;">Mês</button>
+            <button class="btn-periodo" id="r-mes-next" onclick="navMesRec(+1)" style="border-radius:0 4px 4px 0;padding:3px 7px;">›</button>
+          </div>
+          <button class="btn-periodo" id="r-custom"  onclick="setPeriodoRec('custom')">Personalizado</button>
+        </div>
+      </div>
+      <div id="periodo-custom-rec" style="display:none;gap:6px;margin-bottom:6px;align-items:center;">
+        <input type="date" id="r-de"  onchange="calcRecebidos()" style="padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;" />
+        <span style="font-size:12px;color:var(--text3);">até</span>
+        <input type="date" id="r-ate" onchange="calcRecebidos()" style="padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;" />
+      </div>
+      <div style="display:flex;align-items:baseline;gap:10px;">
+        <div class="stat-value" id="s-recebido" style="color:#128c42;">—</div>
+        <div class="stat-sub" id="s-recebido-qtd" style="color:#128c42;">boletos</div>
+      </div>
+      <div class="stat-sub" id="s-recebido-periodo" style="color:var(--text3);margin-top:2px;font-size:11px;"></div>
+    </div>
     <div class="stat-card" style="border-top:3px solid #25d366;">
       <div class="stat-label" style="color:#128c42;">✓ Pagos</div>
       <div class="stat-value" id="s-pago" style="color:#128c42;">—</div>
@@ -482,7 +568,7 @@
 
   <div class="toolbar">
     <div class="toolbar-left">
-      <input type="text" id="busca" placeholder="🔍 Buscar cliente ou venda..." style="width:240px;" oninput="renderTabela()" />
+      <input type="text" id="busca" placeholder="🔍 Buscar cliente ou ID Fácil..." style="width:240px;" oninput="renderTabela()" />
     </div>
     <button class="btn" onclick="limparFiltros()" title="Limpar todos os filtros">✕ Limpar filtros</button>
     <button class="btn" onclick="carregarDados()">↻ Atualizar</button>
@@ -493,8 +579,7 @@
       <thead>
         <tr class="tr-labels">
           <th class="col-nome sortable" onclick="setOrdem('nome')">Cliente <span class="sort-icon" id="si-nome">↕</span></th>
-          <th class="col-venda">Venda</th>
-          <th class="col-parc">Parc.</th>
+          <th class="col-facilid">ID Fácil</th>
           <th class="col-valor sortable" onclick="setOrdem('valor')" style="text-align:right;">Valor <span class="sort-icon" id="si-valor">↕</span></th>
           <th class="col-venc sortable" onclick="setOrdem('venc')">Vencimento <span class="sort-icon" id="si-venc">↑</span></th>
           <th class="col-status">Status</th>
@@ -505,8 +590,7 @@
         </tr>
         <tr class="tr-filters">
           <th class="th-filter col-nome"><input type="text" id="f-nome" placeholder="Filtrar nome..." oninput="renderTabela()" /></th>
-          <th class="th-filter col-venda"><input type="text" id="f-venda" placeholder="#venda" oninput="renderTabela()" /></th>
-          <th class="th-filter col-parc"></th>
+          <th class="th-filter col-facilid"><input type="text" id="f-facilid" placeholder="ID..." oninput="renderTabela()" /></th>
           <th class="th-filter col-valor"></th>
           <th class="th-filter col-venc"><input type="date" id="filtro-data" onchange="renderTabela()" title="Filtrar por vencimento" /></th>
           <th class="th-filter col-status">
@@ -518,6 +602,7 @@
               <option value="escalado">Escalado</option>
               <option value="acordo_realizado">Acordo ✓</option>
               <option value="pago">Pago</option>
+              <option value="cancelado">Cancelado</option>
             </select>
           </th>
           <th class="th-filter col-serasa" style="text-align:center;">
@@ -638,57 +723,205 @@
 
 <!-- Modal adicionar boletos -->
 <div class="overlay" id="modal-add">
-  <div class="modal modal-add" style="width:520px;">
+  <div class="modal modal-add" style="width:600px;">
     <div class="modal-header">
       <div>
-        <div class="modal-title">Adicionar boletos</div>
-        <div class="modal-sub">Cole os dados do Fácil123 ou preencha manualmente</div>
+        <div class="modal-title">📥 Importar / Atualizar boletos</div>
+        <div class="modal-sub">Cole o CSV exportado pelo Fácil123</div>
       </div>
       <button class="btn-close" onclick="fecharModal('modal-add')">×</button>
     </div>
-    <!-- Abas internas -->
     <div class="tabs" style="margin-bottom:1rem;">
-      <button class="tab active" id="tab-btn-importar" onclick="setTabAdd('importar')">➕ Importar boletos</button>
-      <button class="tab tab-atualizar" id="tab-btn-atualizar" onclick="setTabAdd('atualizar')">🔄 Atualizar vencimentos / valores</button>
+      <button class="tab active" id="tab-btn-importar" onclick="setTabAdd('importar')">➕ Importar novos</button>
+      <button class="tab tab-atualizar" id="tab-btn-atualizar" onclick="setTabAdd('atualizar')">🔄 Atualizar existentes</button>
     </div>
 
-    <!-- Aba: Importar (conteúdo original) -->
+    <!-- Aba: Importar via CSV -->
     <div id="tab-content-importar">
-      <div class="form-group">
-        <label>Colar dados do Fácil123 — selecione e cole o bloco completo da tela</label>
-        <textarea id="add-paste" rows="8" placeholder="27/04&#9;Receitas: Vendas&#10;ELIAS MARTINS RESENDE * Venda 43705 * 1/3&#10;1.001,50&#10;27/04&#9;Receitas: Vendas&#10;ISA COMERCIO * Venda 43747 * 1/3&#10;483,20"></textarea>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.6;">
+        <strong>Como exportar do Fácil123:</strong> Financeiro → Transações → Filtrar período → Exportar CSV.<br>
+        Importa apenas <strong>Recebimento</strong> + <strong>Receitas: Vendas</strong>. Duplicatas (mesmo ID Fácil) são ignoradas.
       </div>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
-        <div style="flex:1;height:1px;background:var(--border);"></div>
-        <span style="font-size:12px;color:var(--text3);">ou preencha manualmente</span>
-        <div style="flex:1;height:1px;background:var(--border);"></div>
+
+      <div id="drop-zone" onclick="document.getElementById('csv-file-input').click()"
+        style="border:2px dashed var(--border2);border-radius:var(--radius);padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);">
+        <div style="font-size:32px;margin-bottom:8px;">📂</div>
+        <div style="font-weight:600;color:var(--text);margin-bottom:4px;">Clique para selecionar o arquivo CSV</div>
+        <div style="font-size:12px;color:var(--text3);">ou arraste e solte aqui</div>
+        <input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none;" onchange="lerArquivoCSV(this.files[0])">
       </div>
-      <div class="form-row">
-        <div class="form-group"><label>Nome do cliente</label><input type="text" id="add-nome" /></div>
-        <div class="form-group"><label>Nº da venda</label><input type="text" id="add-venda" /></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>Parcela (ex: 1/3)</label><input type="text" id="add-parcela" /></div>
-        <div class="form-group"><label>Valor (R$)</label><input type="text" id="add-valor" placeholder="1.250,00" /></div>
-      </div>
-      <div class="form-group"><label>Data de vencimento</label><input type="date" id="add-venc" /></div>
-      <button id="btn-salvar-boletos" class="btn btn-primary" style="width:100%;padding:10px;margin-top:4px;" onclick="salvarBoletos()">Salvar na planilha</button>
+
+      <div id="csv-preview" style="display:none;margin-top:12px;font-size:12px;color:var(--text2);background:var(--accent-bg);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:10px 14px;"></div>
+      <button id="btn-salvar-boletos" class="btn btn-primary" style="width:100%;padding:10px;margin-top:12px;display:none;" onclick="salvarBoletos()">💾 Importar para a planilha</button>
     </div>
 
-    <!-- Aba: Atualizar em massa -->
+    <!-- Aba: Atualizar via CSV -->
     <div id="tab-content-atualizar" style="display:none;">
-      <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
-        Cole o mesmo bloco do Fácil123. O sistema vai <strong>comparar</strong> com os boletos já cadastrados e atualizar apenas os que tiverem <strong>vencimento ou valor diferente</strong>. Boletos novos são ignorados.
-      </p>
-      <div class="form-group">
-        <label>Colar dados do Fácil123 — mesmo formato da importação</label>
-        <textarea id="update-paste" rows="8" placeholder="27/04&#9;Receitas: Vendas&#10;ELIAS MARTINS RESENDE * Venda 43705 * 1/3&#10;1.001,50&#10;..."></textarea>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--text2);line-height:1.6;">
+        Selecione o CSV do Fácil123. O sistema compara pelo <strong>ID Fácil</strong> e atualiza vencimento e valor. Boletos novos são ignorados.
       </div>
-      <div style="display:flex;gap:8px;margin-top:4px;">
-        <button class="btn" style="flex:1;" onclick="document.getElementById('update-paste').value='';document.getElementById('update-result').classList.remove('show');">Limpar</button>
-        <button id="btn-atualizar-massa" class="btn btn-primary" style="flex:2;padding:10px;background:#7c3aed;border-color:#7c3aed;" onclick="atualizarBoletosMassa()">⚡ Atualizar em massa</button>
+
+      <div id="drop-zone-update" onclick="document.getElementById('csv-file-update').click()"
+        style="border:2px dashed var(--border2);border-radius:var(--radius);padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);">
+        <div style="font-size:32px;margin-bottom:8px;">📂</div>
+        <div style="font-weight:600;color:var(--text);margin-bottom:4px;">Clique para selecionar o arquivo CSV</div>
+        <div style="font-size:12px;color:var(--text3);">ou arraste e solte aqui</div>
+        <input type="file" id="csv-file-update" accept=".csv,.txt" style="display:none;" onchange="lerArquivoCSVUpdate(this.files[0])">
+      </div>
+
+      <div id="update-preview" style="display:none;margin-top:12px;font-size:12px;color:var(--text2);background:var(--accent-bg);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:10px 14px;"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn" style="flex:1;" onclick="resetDropZoneUpdate()">Limpar</button>
+        <button id="btn-atualizar-massa" class="btn btn-primary" style="flex:2;padding:10px;background:#7c3aed;border-color:#7c3aed;display:none;" onclick="atualizarBoletosMassa()">⚡ Atualizar em massa</button>
       </div>
       <div id="update-result" class="update-result"></div>
+    </div>
+
+    <!-- Aba: Cancelar (dentro do modal de tratativa - presente aqui como fallback) -->
+    <div id="tab-content-cancelar-add" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Modal Negativação Serasa -->
+<div class="overlay" id="modal-neg">
+  <div class="modal modal-neg">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📋 Negativação Serasa</div>
+        <div class="modal-sub">Gerar planilha de negativação em lote (.xlsx)</div>
+      </div>
+      <button class="btn-close" onclick="fecharModal('modal-neg')">×</button>
+    </div>
+
+    <!-- Barra de passos -->
+    <div class="neg-step-bar">
+      <div class="neg-step-item active" id="neg-si-1">1 — Selecionar</div>
+      <div class="neg-step-item" id="neg-si-2">2 — Preview</div>
+      <div class="neg-step-item" id="neg-si-3">3 — Preencher dados</div>
+    </div>
+
+    <!-- PASSO 1: Seleção -->
+    <div class="neg-step active" id="neg-p1">
+      <div class="neg-aviso">
+        ⚠️ Listados apenas boletos <strong>vencidos e em aberto</strong>. Selecione os que deseja negativar.
+        A linha 1 do arquivo ficará em branco para você preencher com o código de identificação do sistema Serasa.
+      </div>
+      <div class="neg-qtd-bar">
+        <span id="neg-qtd-sel">0 selecionado(s)</span>
+        <span id="neg-total-sel" style="font-weight:700;"></span>
+      </div>
+      <!-- Filtros -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+        <div style="font-size:12px;color:var(--text2);font-weight:500;">Filtrar:</div>
+        <select id="neg-filtro-dias" onchange="negAplicarFiltros()" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;">
+          <option value="0">Todos vencidos</option>
+          <option value="7">≥ 7 dias</option>
+          <option value="15">≥ 15 dias</option>
+          <option value="20">≥ 20 dias</option>
+          <option value="30">≥ 30 dias</option>
+          <option value="60">≥ 60 dias</option>
+          <option value="90">≥ 90 dias</option>
+        </select>
+
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button class="btn" style="font-size:12px;padding:5px 10px;" onclick="negSelAll(true)">Selecionar todos</button>
+        <button class="btn" style="font-size:12px;padding:5px 10px;" onclick="negSelAll(false)">Limpar seleção</button>
+      </div>
+      <div class="neg-sel-list" id="neg-lista"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn" style="flex:1;" onclick="fecharModal('modal-neg')">Cancelar</button>
+        <button class="btn btn-primary" style="flex:2;padding:10px;background:#c0392b;border-color:#c0392b;" onclick="negAvancar()">Avançar → Preview 👁️</button>
+      </div>
+    </div>
+
+
+    <!-- PASSO 2: Preview PDF -->
+    <div class="neg-step" id="neg-p2">
+      <div id="neg-preview-content" style="background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:20px 24px;max-height:400px;overflow-y:auto;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn" style="flex:1;" onclick="negSetStep(1)">← Voltar</button>
+        <button class="btn" style="flex:1;border-color:#c0392b;color:#c0392b;" onclick="negImprimirPreview()">🖨️ Gerar PDF</button>
+        <button class="btn btn-primary" style="flex:2;padding:10px;background:#c0392b;border-color:#c0392b;" onclick="negIrParaPreencher()">Avançar → Preencher dados</button>
+      </div>
+    </div>
+
+        <!-- PASSO 2: Preenchimento -->
+    <div class="neg-step" id="neg-p3">
+      <div class="neg-aviso">
+        Campos em <span style="background:#fffbe6;border:1px solid #f0a500;padding:1px 5px;border-radius:3px;font-size:11px;">amarelo</span> são obrigatórios para o Serasa.
+        <strong>Nome, Vencimento e Valor</strong> já foram preenchidos. Complete o restante.
+      </div>
+      <div class="neg-leg">
+        <div style="display:flex;align-items:center;gap:4px;"><div class="neg-leg-box" style="background:#fffbe6;border:1px solid #f0a500;"></div>Obrigatório</div>
+        <div style="display:flex;align-items:center;gap:4px;"><div class="neg-leg-box" style="background:var(--surface2);border:1px solid var(--border);"></div>Preenchido auto</div>
+        <div style="font-size:11px;color:var(--text3);">* Natureza: DC = Dívida c/Cheque · DP = Duplicata · NF = Nota Fiscal · TC = Confissão de Dívida</div>
+      </div>
+      <div class="neg-edit-wrap">
+        <table class="neg-table" id="neg-edit-table">
+          <thead>
+            <tr>
+              <th style="width:180px;">NOME RAZAO SOCIAL</th>
+              <th class="neg-th-req" style="width:38px;">TIPO PESSOA</th>
+              <th class="neg-th-req" style="width:110px;">CPF CNPJ</th>
+              <th style="width:75px;">CEP</th>
+              <th style="width:140px;">ENDERECO</th>
+              <th style="width:90px;">BAIRRO</th>
+              <th style="width:38px;">UF</th>
+              <th style="width:90px;">CIDADE</th>
+              <th style="width:88px;">DATA NASCIMENTO</th>
+              <th style="width:130px;">EMAIL</th>
+              <th style="width:100px;">CELULAR</th>
+              <th style="width:88px;">DATA VENCIMENTO DIVIDA</th>
+              <th style="width:88px;">DATA EMISSAO DIVIDA</th>
+              <th class="neg-th-req" style="width:80px;">VALOR</th>
+              <th class="neg-th-req" style="width:50px;">NATUREZA OPERACAO</th>
+              <th class="neg-th-req" style="width:100px;">NUMERO CONTRATO</th>
+              <th style="width:90px;">NOSSO NUMERO</th>
+              <th style="width:70px;">NUMERO BANCO</th>
+              <th style="width:70px;">NUMERO AGENCIA</th>
+              <th style="width:80px;">NUMERO CHEQUE</th>
+              <th style="width:70px;">NUMERO ALINEA</th>
+              <th style="width:65px;">COMUNICADO EMAIL</th>
+              <th style="width:65px;">COMUNICADO SMS</th>
+              <th style="width:65px;">SMS RECORRENTE</th>
+              <th style="width:80px;">SEGUNDA CARTA COMUNICADO</th>
+            </tr>
+          </thead>
+          <tbody id="neg-edit-body"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn" style="flex:1;" onclick="negSetStep(2)">← Voltar</button>
+        <button class="btn btn-primary" style="flex:2;padding:10px;background:#c0392b;border-color:#c0392b;" onclick="negGerarExcel()">📥 Gerar Excel (.xlsx)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Confirmar Negativação -->
+<div class="overlay" id="modal-neg-confirm">
+  <div class="modal" style="width:640px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">✅ Confirmar Negativação no Serasa</div>
+        <div class="modal-sub">Selecione apenas os boletos que foram <strong>aceitos</strong> pelo Serasa</div>
+      </div>
+      <button class="btn-close" onclick="fecharModal('modal-neg-confirm')">×</button>
+    </div>
+    <div style="background:#e8f4ed;border:1px solid #1a5c38;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:#1a5c38;margin-bottom:14px;line-height:1.6;">
+      ✅ Após inserir a planilha no sistema do Serasa e verificar o retorno, marque abaixo <strong>somente os boletos aceitos</strong>.
+      Os desmarcados <strong>não</strong> serão alterados. Para cada confirmado: o log é registrado nas tratativas e o campo Serasa é marcado como <strong>Sim</strong>.
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn" style="font-size:12px;padding:5px 10px;" onclick="negConfirmSelAll(true)">Marcar todos</button>
+      <button class="btn" style="font-size:12px;padding:5px 10px;" onclick="negConfirmSelAll(false)">Desmarcar todos</button>
+      <span id="neg-confirm-resumo" style="font-size:12px;color:var(--text2);align-self:center;margin-left:auto;"></span>
+    </div>
+    <div style="border:1px solid var(--border);border-radius:var(--radius-sm);max-height:340px;overflow-y:auto;" id="neg-confirm-lista"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn" style="flex:1;" onclick="fecharModal('modal-neg-confirm')">Fechar</button>
+      <button class="btn btn-primary" id="btn-neg-confirm-ok" style="flex:2;padding:10px;background:#128c42;border-color:#128c42;" onclick="negConfirmarNegativacao()">✅ Confirmar selecionados</button>
     </div>
   </div>
 </div>
@@ -859,7 +1092,7 @@
   </div>
 </div>
 
-<div id="app-version" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;pointer-events:none;">Rev 10.4</div>
+<div id="app-version" style="position:fixed;bottom:12px;right:12px;z-index:99999;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:11px;color:var(--text3);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;pointer-events:none;">Rev 11.0</div>
 
 <div class="notify" id="notify"></div>
 
@@ -924,9 +1157,8 @@ function abrirAlterarVencimento(id) {
   if (!b) { notify('Boleto não encontrado.'); return; }
   boletoParaAlterar = b;
 
-  const parcStr = normalizarParcela(b.parcela);
   document.getElementById('vd-nome').textContent        = b.nome;
-  document.getElementById('vd-venda').textContent       = 'Venda ' + b.venda + (parcStr !== '—' ? ' · ' + parcStr : '');
+  document.getElementById('vd-venda').textContent       = b.facilId ? 'ID Fácil: ' + b.facilId : '—';
   document.getElementById('vd-valor').textContent       = 'R$ ' + normalizarValor(b.valor);
   document.getElementById('vd-venc-atual').textContent  = normalizarData(b.vencimento);
 
@@ -974,12 +1206,10 @@ async function salvarNovoVencimento() {
 
 // ─── ATUALIZAÇÃO EM MASSA ────────────────────────────────────────────────────
 async function atualizarBoletosMassa() {
-  const paste = document.getElementById('update-paste').value.trim();
-  if (!paste) { notify('Cole os dados do Fácil123 primeiro.'); return; }
+  if (!csvUpdateContent) { notify('Selecione um arquivo CSV primeiro.'); return; }
 
-  // Reutiliza o mesmo parser da importação
-  const parsed = parseBlocoFacil123(paste);
-  if (parsed.length === 0) { notify('Nenhum boleto reconhecido. Verifique o formato.'); return; }
+  const parsed = parseCSVFacil123(csvUpdateContent);
+  if (parsed.length === 0) { notify('Nenhum boleto reconhecido. Verifique o CSV.'); return; }
 
   const r = await gsCall({ action: 'updateBoletosMassa', boletos: parsed });
   if (!r) return;
@@ -1001,14 +1231,14 @@ async function atualizarBoletosMassa() {
       html += `<div style="margin-top:6px;font-size:12px;color:var(--text2);">`;
       r.atualizados.forEach(item => {
         html += `<div style="padding:3px 0;border-bottom:1px solid var(--border);">
-          <strong>${item.venda}${item.parcela ? ' · ' + item.parcela : ''}</strong> — ${item.alteracoes.join(' | ')}
+          <strong>${item.nome||item.facilId}</strong> — ${item.alteracoes.join(' | ')}
         </div>`;
       });
       html += `</div>`;
     }
 
     if (r.naoEncontrados && r.naoEncontrados.length > 0) {
-      html += `<div class="update-nao-encontrados">Não localizados: ${r.naoEncontrados.join(', ')}</div>`;
+      html += `<div class="update-nao-encontrados">IDs não localizados: ${r.naoEncontrados.join(', ')}</div>`;
     }
 
     res.innerHTML = html;
@@ -1035,7 +1265,7 @@ function abrirCancelamento(id) {
   // Reutiliza o modal-trat: preenche cabeçalho igual ao abrirTratativa
   boletoAtivo = b;
   document.getElementById('mt-nome').textContent = b.nome;
-  document.getElementById('mt-info').textContent = `Venda ${b.venda}${b.parcela ? ' · Parcela ' + b.parcela : ''} · R$ ${b.valor} · Venc. ${b.vencimento}`;
+  document.getElementById('mt-info').textContent = `R$ ${normalizarValor(b.valor)} · Venc. ${b.vencimento}${b.facilId ? ' · ID: ' + b.facilId : ''}`;
 
   // Limpa os campos de cancelamento
   document.getElementById('cancel-motivo').value = '';
@@ -1090,6 +1320,560 @@ async function confirmarCancelamento() {
 
 let concilPeriodo = 'mes';
 let concilMesOffset = 0;
+
+// ─── NEGATIVAÇÃO SERASA ───────────────────────────────────────────────────────
+
+let negSelecionados = [];
+let negVencidosBase = [];
+let negPendentesConfirmacao = []; // IDs exportados aguardando confirmação no Serasa
+
+function negAtualizarBotaoConfirmacao() {
+  const btn = document.getElementById('btn-confirmar-neg');
+  const cnt = document.getElementById('btn-confirmar-neg-cnt');
+  if (!btn) return;
+  const pendentes = boletos.filter(b => negPendentesConfirmacao.includes(b.id));
+  if (pendentes.length > 0) {
+    btn.style.display = 'inline-block';
+    if (cnt) cnt.textContent = `(${pendentes.length})`;
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+function abrirConfirmarNegativacao() {
+  const pendentes = boletos.filter(b => negPendentesConfirmacao.includes(b.id));
+  if (pendentes.length === 0) { notify('Nenhum boleto aguardando confirmação.'); return; }
+
+  const toFloat = v => parseFloat((normalizarValor(v||'0')).replace(/\./g,'').replace(',','.')) || 0;
+  const fmtBR   = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  document.getElementById('neg-confirm-lista').innerHTML = pendentes.map(b => `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px;cursor:pointer;" id="neg-conf-row-${b.id}" onclick="negConfirmToggle('${b.id}')">
+      <input type="checkbox" id="neg-conf-chk-${b.id}" checked style="accent-color:#128c42;width:15px;height:15px;flex-shrink:0;" onclick="event.stopPropagation();negConfirmToggle('${b.id}')">
+      <span style="flex:1;font-weight:500;">${b.nome}</span>
+      <span style="font-size:12px;color:var(--text2);white-space:nowrap;">Venc. ${normalizarData(b.vencimento)}</span>
+      <span style="font-size:12px;font-weight:600;white-space:nowrap;">${fmtBR(toFloat(b.valor))}</span>
+    </div>`).join('');
+
+  negConfirmarResumo();
+  document.getElementById('modal-neg-confirm').classList.add('open');
+}
+
+function negConfirmToggle(id) {
+  const chk = document.getElementById('neg-conf-chk-' + id);
+  const row = document.getElementById('neg-conf-row-' + id);
+  if (!chk) return;
+  chk.checked = !chk.checked;
+  row.style.background = chk.checked ? '' : 'var(--surface2)';
+  row.style.opacity    = chk.checked ? '1' : '0.5';
+  negConfirmarResumo();
+}
+
+function negConfirmSelAll(sel) {
+  negPendentesConfirmacao.forEach(id => {
+    const chk = document.getElementById('neg-conf-chk-' + id);
+    const row = document.getElementById('neg-conf-row-' + id);
+    if (!chk) return;
+    chk.checked = sel;
+    row.style.background = sel ? '' : 'var(--surface2)';
+    row.style.opacity    = sel ? '1' : '0.5';
+  });
+  negConfirmarResumo();
+}
+
+function negConfirmarResumo() {
+  const marcados = negPendentesConfirmacao.filter(id => {
+    const chk = document.getElementById('neg-conf-chk-' + id);
+    return chk && chk.checked;
+  });
+  const el = document.getElementById('neg-confirm-resumo');
+  if (el) el.textContent = `${marcados.length} de ${negPendentesConfirmacao.length} selecionados`;
+}
+
+async function negConfirmarNegativacao() {
+  const aceitos = negPendentesConfirmacao.filter(id => {
+    const chk = document.getElementById('neg-conf-chk-' + id);
+    return chk && chk.checked;
+  });
+
+  if (aceitos.length === 0) { notify('Selecione ao menos um boleto para confirmar.'); return; }
+
+  const btn = document.getElementById('btn-neg-confirm-ok');
+  btn.disabled = true;
+  btn.textContent = `⏳ Gravando ${aceitos.length} registros...`;
+
+  const agora  = new Date().toLocaleString('pt-BR');
+  const obsLog = `[NEGATIVAÇÃO SERASA CONFIRMADA] Aceito pelo sistema Serasa em ${agora}.`;
+  const selsAceitos = boletos.filter(b => aceitos.includes(b.id));
+
+  await Promise.all(selsAceitos.map(b => gsCall({
+    action:        'addTratativa',
+    boletoId:      b.id,
+    dataHora:      agora,
+    canal:         'Serasa',
+    status:        b.status,
+    obs:           obsLog,
+    dataProm:      '',
+    proximo:       '',
+    resp:          '',
+    serasa:        'sim',
+    valorRecebido: ''
+  })));
+
+  // Remove os confirmados da lista de pendentes
+  negPendentesConfirmacao = negPendentesConfirmacao.filter(id => !aceitos.includes(id));
+
+  btn.disabled = false;
+  btn.textContent = '✅ Confirmar selecionados';
+
+  notify(`✅ ${aceitos.length} boleto(s) confirmados — Serasa = Sim gravado e log registrado.`);
+  fecharModal('modal-neg-confirm');
+  negAtualizarBotaoConfirmacao();
+  await carregarDados();
+}
+
+
+
+function abrirNegativacao() {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const toDate = b => {
+    const d = normalizarData(b.vencimento); if (!d||d==='—') return null;
+    const p = d.split('/'); return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
+  };
+  const baixados = ['pago','acordo_realizado','cancelado'];
+  negVencidosBase = boletos.filter(b => !baixados.includes(b.status) && (() => { const d=toDate(b); return d && d < hoje; })());
+
+  // Exclui automaticamente os que já estão negativados (serasa=sim) — sem mostrar para o usuário
+  negVencidosBase = boletos.filter(b =>
+    !baixados.includes(b.status) &&
+    (b.serasa || 'nao').toLowerCase() !== 'sim' &&
+    (() => { const d=toDate(b); return d && d < hoje; })()
+  );
+
+  if (negVencidosBase.length === 0) { notify('Nenhum boleto vencido sem negativação pendente.'); return; }
+
+  // Reset filtro de dias
+  const sFiltro = document.getElementById('neg-filtro-dias');
+  if (sFiltro) sFiltro.value = '0';
+
+  negSelecionados = [];
+  negAplicarFiltros();
+  negSetStep(1);
+  document.getElementById('modal-neg').classList.add('open');
+}
+
+function negAplicarFiltros() {
+  const hoje    = new Date(); hoje.setHours(0,0,0,0);
+  const toDate  = b => { const d = normalizarData(b.vencimento); if (!d||d==='—') return null; const p=d.split('/'); return new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0])); };
+  const sDias   = parseInt(document.getElementById('neg-filtro-dias')?.value || '0');
+
+  const filtrados = negVencidosBase.filter(b => {
+    if (sDias > 0) {
+      const d = toDate(b);
+      if (!d) return false;
+      const diasAtraso = Math.floor((hoje - d) / 86400000);
+      if (diasAtraso < sDias) return false;
+    }
+    return true;
+  });
+
+  negRenderizarLista(filtrados);
+
+  // Manter seleção apenas dos que ainda aparecem na lista filtrada
+  const idsVisiveis = new Set(filtrados.map(b => b.id));
+  negSelecionados = negSelecionados.filter(id => idsVisiveis.has(id));
+  negAtualizarQtd();
+}
+
+function negRenderizarLista(lista) {
+  const toFloat = v => parseFloat((normalizarValor(v||'0')).replace(/\./g,'').replace(',','.')) || 0;
+  const fmtBR   = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const hoje    = new Date(); hoje.setHours(0,0,0,0);
+  const toDate  = b => { const d=normalizarData(b.vencimento); if(!d||d==='—') return null; const p=d.split('/'); return new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0])); };
+
+  const el = document.getElementById('neg-lista');
+  if (lista.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text2);font-size:13px;">Nenhum boleto encontrado com os filtros aplicados.</div>';
+    return;
+  }
+
+  el.innerHTML = lista.map(b => {
+    const d = toDate(b);
+    const diasAtraso = d ? Math.floor((hoje - d) / 86400000) : 0;
+    const serasaSim  = (b.serasa||'nao').toLowerCase() === 'sim';
+    return `
+    <div class="neg-sel-row${negSelecionados.includes(b.id)?' selected':''}" id="neg-row-${b.id}" onclick="negToggle('${b.id}')">
+      <input type="checkbox" id="neg-chk-${b.id}" ${negSelecionados.includes(b.id)?'checked':''} onclick="event.stopPropagation();negToggle('${b.id}')">
+      <span class="neg-sel-nome">${b.nome}</span>
+      <span style="font-size:11px;color:#888;white-space:nowrap;">${diasAtraso}d atraso</span>
+      <span class="neg-sel-venc" style="margin-left:auto;">Venc. ${normalizarData(b.vencimento)}</span>
+      <span class="neg-sel-val">${fmtBR(toFloat(b.valor))}</span>
+    </div>`;
+  }).join('');
+}
+
+function negToggle(id) {
+  const chk = document.getElementById('neg-chk-' + id);
+  const row = document.getElementById('neg-row-' + id);
+  if (!chk) return;
+  chk.checked = !chk.checked;
+  row.classList.toggle('selected', chk.checked);
+  if (chk.checked) { if (!negSelecionados.includes(id)) negSelecionados.push(id); }
+  else              { negSelecionados = negSelecionados.filter(x => x !== id); }
+  negAtualizarQtd();
+}
+
+function negSelAll(sel) {
+  document.querySelectorAll('#neg-lista .neg-sel-row').forEach(row => {
+    const id  = row.id.replace('neg-row-','');
+    const chk = document.getElementById('neg-chk-' + id);
+    if (!chk) return;
+    chk.checked = sel;
+    row.classList.toggle('selected', sel);
+    if (sel && !negSelecionados.includes(id)) negSelecionados.push(id);
+  });
+  if (!sel) negSelecionados = [];
+  negAtualizarQtd();
+}
+
+function negAtualizarQtd() {
+  const toFloat = v => parseFloat((normalizarValor(v||'0')).replace(/\./g,'').replace(',','.')) || 0;
+  const fmtBR   = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const sels    = boletos.filter(b => negSelecionados.includes(b.id));
+  const total   = sels.reduce((s,b) => s + toFloat(b.valor), 0);
+  document.getElementById('neg-qtd-sel').textContent  = negSelecionados.length + ' selecionado(s)';
+  document.getElementById('neg-total-sel').textContent = negSelecionados.length > 0 ? '→ ' + fmtBR(total) : '';
+}
+
+function negSetStep(n) {
+  document.querySelectorAll('.neg-step').forEach((el,i) => el.classList.toggle('active', i+1 === n));
+  document.querySelectorAll('.neg-step-item').forEach((el,i) => {
+    el.classList.remove('active','done');
+    if (i+1 === n) el.classList.add('active');
+    if (i+1 < n)  el.classList.add('done');
+  });
+}
+
+function negAvancar() {
+  if (negSelecionados.length === 0) { notify('Selecione ao menos um boleto.'); return; }
+  negMontarPreview();
+  negSetStep(2);
+}
+
+function negVoltar() { negSetStep(1); }
+
+function negIrParaPreencher() {
+  negMontarTabela();
+  negSetStep(3);
+}
+
+function negMontarPreview() {
+  const toFloat  = v => parseFloat((normalizarValor(v||'0')).replace(/\./g,'').replace(',','.')) || 0;
+  const fmtBR    = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const hoje     = new Date(); hoje.setHours(0,0,0,0);
+  const toDate   = b => { const d=normalizarData(b.vencimento); if(!d||d==='—') return null; const p=d.split('/'); return new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0])); };
+  const sels     = boletos.filter(b => negSelecionados.includes(b.id));
+  const total    = sels.reduce((s,b) => s+toFloat(b.valor), 0);
+  const dtHoje   = hoje.toLocaleDateString('pt-BR');
+
+  const linhas = sels.map((b, i) => {
+    const d = toDate(b);
+    const dias = d ? Math.floor((hoje - d) / 86400000) : 0;
+    return `<tr>
+      <td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;">${i+1}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;font-weight:500;">${b.nome}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;text-align:center;">${normalizarData(b.vencimento)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;text-align:center;color:#c0392b;">${dias} dias</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:600;">${fmtBR(toFloat(b.valor))}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('neg-preview-content').innerHTML = `
+    <div style="font-family:Arial,sans-serif;font-size:13px;color:#1a1a18;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #1a5c38;">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#1a5c38;">Explosão Alimentos</div>
+          <div style="font-size:13px;color:#666;margin-top:2px;">Relatório de Negativação — Serasa</div>
+        </div>
+        <div style="text-align:right;font-size:12px;color:#666;">
+          <div>Emitido em: <strong>${dtHoje}</strong></div>
+          <div>Total de devedores: <strong>${sels.length}</strong></div>
+        </div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="background:#1a5c38;color:#fff;">
+            <th style="padding:8px 10px;text-align:left;font-size:11px;">#</th>
+            <th style="padding:8px 10px;text-align:left;font-size:11px;">CLIENTE</th>
+            <th style="padding:8px 10px;text-align:center;font-size:11px;">VENCIMENTO</th>
+            <th style="padding:8px 10px;text-align:center;font-size:11px;">ATRASO</th>
+            <th style="padding:8px 10px;text-align:right;font-size:11px;">VALOR</th>
+          </tr>
+        </thead>
+        <tbody>${linhas}</tbody>
+        <tfoot>
+          <tr style="background:#f5f5f5;">
+            <td colspan="4" style="padding:10px;font-weight:700;font-size:14px;border-top:2px solid #1a5c38;">TOTAL</td>
+            <td style="padding:10px;text-align:right;font-weight:700;font-size:15px;color:#1a5c38;border-top:2px solid #1a5c38;">${fmtBR(total)}</td>
+          </tr>
+        </tfoot>
+      </table>
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid #e0e0e0;font-size:11px;color:#999;text-align:center;">
+        Este documento é um relatório interno para aprovação prévia à negativação no Serasa.
+      </div>
+    </div>`;
+}
+
+function negImprimirPreview() {
+  const toFloat  = v => parseFloat((normalizarValor(v||'0')).replace(/\./g,'').replace(',','.')) || 0;
+  const fmtBR    = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const hoje     = new Date(); hoje.setHours(0,0,0,0);
+  const toDate   = b => { const d=normalizarData(b.vencimento); if(!d||d==='—') return null; const p=d.split('/'); return new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0])); };
+  const sels     = boletos.filter(b => negSelecionados.includes(b.id));
+  const total    = sels.reduce((s,b) => s+toFloat(b.valor), 0);
+  const dtHoje   = hoje.toLocaleDateString('pt-BR');
+
+  const linhas = sels.map((b, i) => {
+    const d = toDate(b);
+    const dias = d ? Math.floor((hoje - d) / 86400000) : 0;
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${b.nome}</td>
+      <td>${normalizarData(b.vencimento)}</td>
+      <td>${dias} dias</td>
+      <td style="text-align:right">${fmtBR(toFloat(b.valor))}</td>
+    </tr>`;
+  }).join('');
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR"><head>
+<meta charset="UTF-8">
+<title>Negativação Serasa — ${dtHoje}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a18; padding: 32px; }
+  .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; padding-bottom:14px; border-bottom: 2px solid #1a5c38; }
+  .header-empresa { font-size:18px; font-weight:700; color:#1a5c38; }
+  .header-sub { font-size:13px; color:#666; margin-top:3px; }
+  .header-info { text-align:right; font-size:12px; color:#666; line-height:1.7; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; }
+  thead tr { background:#1a5c38; color:#fff; }
+  th { padding:9px 12px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; }
+  td { padding:8px 12px; border-bottom:1px solid #e0e0e0; font-size:13px; }
+  tr:nth-child(even) td { background:#f9f9f9; }
+  tfoot tr td { border-top:2px solid #1a5c38; background:#f0f0ec; font-weight:700; padding:10px 12px; }
+  .val { text-align:right; }
+  .total-val { text-align:right; font-size:15px; color:#1a5c38; }
+  .atraso { text-align:center; color:#c0392b; }
+  .venc { text-align:center; }
+  .footer { margin-top:24px; padding-top:12px; border-top:1px solid #e0e0e0; font-size:11px; color:#999; text-align:center; }
+  .aviso { margin-top:28px; border:1px solid #f0d060; background:#fef9ec; border-radius:6px; padding:12px 16px; font-size:12px; color:#7a5c00; line-height:1.6; }
+  .assinatura { margin-top:36px; display:flex; gap:48px; }
+  .ass-campo { flex:1; padding-top:40px; border-top:1px solid #333; font-size:11px; color:#555; text-align:center; }
+  @media print {
+    body { padding:20px; }
+    @page { margin:1.5cm; size: A4; }
+  }
+</style>
+</head><body>
+<div class="header">
+  <div>
+    <div class="header-empresa">Explosão Alimentos</div>
+    <div class="header-sub">Relatório de Aprovação — Negativação Serasa</div>
+  </div>
+  <div class="header-info">
+    <div>Data: <strong>${dtHoje}</strong></div>
+    <div>Total de devedores: <strong>${sels.length}</strong></div>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Cliente</th>
+      <th class="venc">Vencimento</th>
+      <th class="atraso">Atraso</th>
+      <th class="val">Valor</th>
+    </tr>
+  </thead>
+  <tbody>${linhas}</tbody>
+  <tfoot>
+    <tr>
+      <td colspan="4">TOTAL A NEGATIVAR</td>
+      <td class="total-val">${fmtBR(total)}</td>
+    </tr>
+  </tfoot>
+</table>
+
+<div class="aviso">
+  ⚠️ <strong>Atenção:</strong> A negativação desses clientes no Serasa é irreversível enquanto a dívida não for quitada.
+  Confirme com o setor comercial antes de prosseguir com o envio ao Serasa.
+</div>
+
+<div class="assinatura">
+  <div class="ass-campo">Responsável Financeiro</div>
+  <div class="ass-campo">Aprovação Comercial</div>
+  <div class="ass-campo">Data de Aprovação</div>
+</div>
+
+<div class="footer">Documento gerado pelo CRM de Cobranças — Explosão Alimentos · ${dtHoje}</div>
+
+<script>window.onload = () => { window.print(); }<\/script>
+</body></html>`);
+  win.document.close();
+}
+
+function negMontarTabela() {
+  const toFloat  = v => parseFloat((normalizarValor(v||'0')).replace(/\./g,'').replace(',','.')) || 0;
+  const sels     = boletos.filter(b => negSelecionados.includes(b.id));
+  document.getElementById('neg-edit-body').innerHTML = sels.map((b, idx) => {
+    const valorUniv  = toFloat(b.valor).toFixed(2);
+    const numContrato = b.facilId || b.id;
+    return `<tr>
+      <td><input type="text" value="${b.nome}" readonly /></td>
+      <td><select id="neg-tp-${idx}" class="obrig" onchange="negTpChange(${idx})">
+        <option value="">--</option><option value="F">F</option><option value="J">J</option>
+      </select></td>
+      <td><input type="text" id="neg-cpf-${idx}" class="obrig" placeholder="Só nº" maxlength="14" /></td>
+      <td><input type="text" id="neg-cep-${idx}" placeholder="8 dígitos" maxlength="8" /></td>
+      <td><input type="text" id="neg-end-${idx}" placeholder="Endereço" /></td>
+      <td><input type="text" id="neg-bai-${idx}" placeholder="Bairro" /></td>
+      <td><input type="text" id="neg-uf-${idx}" maxlength="2" placeholder="UF" style="text-transform:uppercase;" /></td>
+      <td><input type="text" id="neg-cid-${idx}" placeholder="Cidade" /></td>
+      <td><input type="date" id="neg-nasc-${idx}" title="Obrigatório p/ PF" /></td>
+      <td><input type="text" id="neg-email-${idx}" placeholder="email" /></td>
+      <td><input type="text" id="neg-cel-${idx}" placeholder="11 dígitos" maxlength="11" /></td>
+      <td><input type="text" value="${normalizarData(b.vencimento)}" readonly /></td>
+      <td><input type="date" id="neg-emis-${idx}" /></td>
+      <td><input type="text" value="${valorUniv}" readonly /></td>
+      <td><select id="neg-nat-${idx}" class="obrig">
+        <option value="">--</option>
+        <option value="DC">DC — Dívida c/Cheque</option>
+        <option value="DP">DP — Duplicata</option>
+        <option value="NF">NF — Nota Fiscal</option>
+        <option value="TC">TC — Confissão de Dívida</option>
+      </select></td>
+      <td><input type="text" value="${numContrato}" id="neg-cont-${idx}" class="obrig" /></td>
+      <td><input type="text" id="neg-nosso-${idx}" placeholder="Opcional" /></td>
+      <td><input type="text" id="neg-banco-${idx}" placeholder="DC" /></td>
+      <td><input type="text" id="neg-ag-${idx}" placeholder="DC" /></td>
+      <td><input type="text" id="neg-cheq-${idx}" placeholder="DC" /></td>
+      <td><select id="neg-alin-${idx}">
+        <option value=""></option><option value="12">12</option>
+        <option value="13">13</option><option value="14">14</option>
+      </select></td>
+      <td><select id="neg-cemail-${idx}"><option value=""></option><option value="SIM">SIM</option></select></td>
+      <td><select id="neg-csms-${idx}"><option value=""></option><option value="SIM">SIM</option></select></td>
+      <td><select id="neg-smsrec-${idx}">
+        <option value=""></option>
+        <option value="7">7</option><option value="15">15</option><option value="30">30</option>
+      </select></td>
+      <td><select id="neg-carta-${idx}"><option value=""></option><option value="SIM">SIM</option></select></td>
+    </tr>`;
+  }).join('');
+}
+
+function negTpChange(idx) {
+  const tp   = document.getElementById('neg-tp-' + idx);
+  const nasc = document.getElementById('neg-nasc-' + idx);
+  if (nasc) nasc.classList.toggle('obrig', tp && tp.value === 'F');
+}
+
+async function negGerarExcel() {
+  if (typeof XLSX === 'undefined') { notify('Biblioteca XLSX não carregada. Verifique a conexão.'); return; }
+  const toFloat = v => parseFloat((normalizarValor(v||'0')).replace(/\./g,'').replace(',','.')) || 0;
+  const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const sels = boletos.filter(b => negSelecionados.includes(b.id));
+
+  // Validação
+  const erros = [];
+  sels.forEach((b, idx) => {
+    const tp  = g('neg-tp-'+idx);
+    const cpf = g('neg-cpf-'+idx);
+    const nat = g('neg-nat-'+idx);
+    const con = g('neg-cont-'+idx);
+    if (!tp)                            erros.push(`${b.nome}: Tipo Pessoa obrigatório.`);
+    if (!cpf)                           erros.push(`${b.nome}: CPF/CNPJ obrigatório.`);
+    if (tp==='F' && cpf && cpf.length!==11) erros.push(`${b.nome}: CPF deve ter 11 dígitos.`);
+    if (tp==='J' && cpf && cpf.length!==14) erros.push(`${b.nome}: CNPJ deve ter 14 dígitos.`);
+    if (!nat)                           erros.push(`${b.nome}: Natureza de Operação obrigatória.`);
+    if (!con)                           erros.push(`${b.nome}: Número Contrato obrigatório.`);
+  });
+  if (erros.length > 0) { notify('⚠️ ' + erros[0] + (erros.length>1 ? ` (+${erros.length-1} mais)` : '')); return; }
+
+  const fmtDate = v => { if (!v) return ''; const p=v.split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:v; };
+
+  const cabecalhos = [
+    'NOME RAZAO SOCIAL','TIPO PESSOA','CPF CNPJ','CEP','ENDERECO','BAIRRO','UF','CIDADE',
+    'DATA NASCIMENTO','EMAIL','CELULAR','DATA VENCIMENTO DIVIDA','DATA EMISSAO DIVIDA',
+    'VALOR','NATUREZA OPERACAO','NUMERO CONTRATO','NOSSO NUMERO',
+    'NUMERO BANCO','NUMERO AGENCIA','NUMERO CHEQUE','NUMERO ALINEA',
+    'COMUNICADO EMAIL','COMUNICADO SMS','SMS RECORRENTE','SEGUNDA CARTA COMUNICADO'
+  ];
+
+  const rows = sels.map((b, idx) => [
+    b.nome,
+    g('neg-tp-'+idx),
+    g('neg-cpf-'+idx),
+    g('neg-cep-'+idx),
+    g('neg-end-'+idx),
+    g('neg-bai-'+idx),
+    g('neg-uf-'+idx).toUpperCase(),
+    g('neg-cid-'+idx),
+    fmtDate(g('neg-nasc-'+idx)),
+    g('neg-email-'+idx),
+    g('neg-cel-'+idx),
+    normalizarData(b.vencimento),
+    fmtDate(g('neg-emis-'+idx)),
+    toFloat(b.valor).toFixed(2),
+    g('neg-nat-'+idx),
+    g('neg-cont-'+idx),
+    g('neg-nosso-'+idx),
+    g('neg-banco-'+idx),
+    g('neg-ag-'+idx),
+    g('neg-cheq-'+idx),
+    g('neg-alin-'+idx),
+    g('neg-cemail-'+idx),
+    g('neg-csms-'+idx),
+    g('neg-smsrec-'+idx),
+    g('neg-carta-'+idx)
+  ]);
+
+  const wsData = [[''], cabecalhos, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Forçar CPF/CNPJ (C), CEP (D) e Celular (K) como texto para preservar zeros à esquerda
+  rows.forEach((row, i) => {
+    [2, 3, 10].forEach(col => {
+      const cell = XLSX.utils.encode_cell({ r: i+2, c: col });
+      if (ws[cell]) { ws[cell].t = 's'; ws[cell].z = '@'; }
+    });
+  });
+
+  ws['!cols'] = [
+    {wch:30},{wch:8},{wch:16},{wch:10},{wch:25},{wch:15},{wch:5},{wch:15},
+    {wch:12},{wch:25},{wch:13},{wch:14},{wch:14},{wch:12},{wch:8},{wch:18},
+    {wch:14},{wch:8},{wch:8},{wch:10},{wch:8},{wch:10},{wch:10},{wch:10},{wch:12}
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Negativacao');
+
+  const hoje = new Date();
+  const dt   = `${String(hoje.getDate()).padStart(2,'0')}${String(hoje.getMonth()+1).padStart(2,'0')}${hoje.getFullYear()}`;
+  XLSX.writeFile(wb, `Negativacao_Serasa_${dt}.xlsx`);
+
+  // Salva os IDs exportados para confirmação posterior (após verificar aceitação no Serasa)
+  negPendentesConfirmacao = [...negPendentesConfirmacao, ...sels.map(b => b.id)]
+    .filter((id, i, arr) => arr.indexOf(id) === i); // remove duplicatas se exportar duas vezes
+
+  negAtualizarBotaoConfirmacao();
+
+  notify(`✅ ${sels.length} boleto(s) exportado(s). Após inserir no Serasa, clique em "✅ Confirmar negativação" para registrar os aceitos.`);
+  fecharModal('modal-neg');
+}
 
 function abrirConciliacao() {
   resetConciliacao();
@@ -1220,20 +2004,16 @@ function executarConciliacao() {
     return parseFloat(s) || 0;
   };
 
-  // 4. Montar mapa do Fácil
+  // 4. Montar mapa do Fácil — chave = facilId
   const mapaFacil = new Map();
   facil.forEach(b => {
-    const parc  = String(b.parcela || '').trim();
-    const chave = parc ? `P|${b.venda}|${parc}` : `A|${b.venda}|${normalizarValor(b.valor)}`;
-    mapaFacil.set(chave, b);
+    if (b.facilId) mapaFacil.set(String(b.facilId), b);
   });
 
-  // 5. Montar mapa do CRM
+  // 5. Montar mapa do CRM — chave = facilId
   const mapaCRM = new Map();
   crm.forEach(b => {
-    const parc  = String(b.parcela || '').replace(/^'/, '').trim();
-    const chave = parc ? `P|${b.venda}|${parc}` : `A|${b.venda}|${normalizarValor(b.valor)}`;
-    mapaCRM.set(chave, b);
+    if (b.facilId) mapaCRM.set(String(b.facilId), b);
   });
 
   // 6. Calcular divergências
@@ -1243,7 +2023,7 @@ function executarConciliacao() {
     if (mapaFacil.has(chave)) {
       const f = mapaFacil.get(chave);
       if (Math.abs(toFloat(b.valor) - toFloat(f.valor)) >= 0.02) {
-        difValor.push({ venda: b.venda, parcela: b.parcela, nome: b.nome,
+        difValor.push({ facilId: chave, nome: b.nome,
                         valorCRM: b.valor, valorFacil: f.valor,
                         diff: toFloat(f.valor) - toFloat(b.valor) });
       }
@@ -1295,9 +2075,9 @@ function executarConciliacao() {
   document.getElementById('concil-lista-valor').innerHTML = difValor.length === 0
     ? '<div class="concil-empty">✅ Nenhuma divergência de valor encontrada.</div>'
     : `<table class="concil-table">
-        <thead><tr><th>Cliente</th><th>Venda</th><th>Parcela</th><th style="text-align:right">Valor CRM</th><th style="text-align:right">Valor Fácil</th><th style="text-align:right">Diferença</th></tr></thead>
+        <thead><tr><th>Cliente</th><th>ID Fácil</th><th style="text-align:right">Valor CRM</th><th style="text-align:right">Valor Fácil</th><th style="text-align:right">Diferença</th></tr></thead>
         <tbody>${difValor.map(d => `<tr>
-          <td>${d.nome}</td><td>${d.venda}</td><td>${normalizarParcela(d.parcela)}</td>
+          <td>${d.nome}</td><td>${d.facilId||'—'}</td>
           <td style="text-align:right">${normalizarValor(d.valorCRM)}</td>
           <td style="text-align:right">${normalizarValor(d.valorFacil)}</td>
           <td style="text-align:right" class="${d.diff>0?'diff-neg':'diff-pos'}">${d.diff>0?'+':''}${fmtBR(d.diff)}</td>
@@ -1311,9 +2091,9 @@ function executarConciliacao() {
   document.getElementById('concil-lista-socrm').innerHTML = soCRM.length === 0
     ? '<div class="concil-empty">✅ Todos os boletos do CRM foram encontrados no Fácil123.</div>'
     : `<table class="concil-table">
-        <thead><tr><th>Cliente</th><th>Venda</th><th>Parcela</th><th style="text-align:right">Valor</th><th>Vencimento</th><th>Status CRM</th></tr></thead>
+        <thead><tr><th>Cliente</th><th>ID Fácil</th><th style="text-align:right">Valor</th><th>Vencimento</th><th>Status CRM</th></tr></thead>
         <tbody>${soCRM.map(b => `<tr>
-          <td>${b.nome}</td><td>${b.venda}</td><td>${normalizarParcela(b.parcela)}</td>
+          <td>${b.nome}</td><td>${b.facilId||'—'}</td>
           <td style="text-align:right">${normalizarValor(b.valor)}</td>
           <td>${normalizarData(b.vencimento)}</td>
           <td><span class="badge ${statusBadge[b.status]||'b-pendente'}">${statusLabel[b.status]||b.status}</span></td>
@@ -1330,9 +2110,9 @@ function executarConciliacao() {
   document.getElementById('concil-lista-sofacil').innerHTML = soFacil.length === 0
     ? '<div class="concil-empty">✅ Todos os boletos do Fácil123 já estão no CRM.</div>'
     : `<table class="concil-table">
-        <thead><tr><th>Cliente</th><th>Venda</th><th>Parcela</th><th style="text-align:right">Valor</th><th>Vencimento</th></tr></thead>
+        <thead><tr><th>Cliente</th><th>ID Fácil</th><th style="text-align:right">Valor</th><th>Vencimento</th></tr></thead>
         <tbody>${soFacil.map(f => `<tr>
-          <td>${f.nome}</td><td>${f.venda}</td><td>${normalizarParcela(f.parcela)}</td>
+          <td>${f.nome}</td><td>${f.facilId||'—'}</td>
           <td style="text-align:right">${normalizarValor(f.valor)}</td>
           <td>${f.vencimento || '—'}</td>
         </tr>`).join('')}</tbody>
@@ -1442,35 +2222,26 @@ async function salvarTratativa() {
 }
 
 async function salvarBoletos() {
-  const paste = document.getElementById('add-paste').value.trim();
-  const novos = [];
+  if (!csvImportContent) { notify('Selecione um arquivo CSV primeiro.'); return; }
 
-  if (paste) {
-    novos.push(...parseBlocoFacil123(paste));
-  } else {
-    const nome  = document.getElementById('add-nome').value.trim();
-    const venda = document.getElementById('add-venda').value.trim();
-    const parc  = document.getElementById('add-parcela').value.trim();
-    const valor = document.getElementById('add-valor').value.trim();
-    const venc  = document.getElementById('add-venc').value;
-    if (!nome || !venda || !valor || !venc) { notify('Preencha todos os campos obrigatórios.'); return; }
-    novos.push({ nome, venda, parcela: parc, valor, vencimento: formatarData(venc) });
+  const novos = parseCSVFacil123(csvImportContent);
+  if (novos.length === 0) {
+    notify('Nenhum boleto de Recebimento/Vendas encontrado. Verifique o CSV.');
+    return;
   }
-
-  if (novos.length === 0) { notify('Nenhum dado válido encontrado. Verifique o formato colado.'); return; }
 
   const r = await gsCall({ action: 'addBoletos', boletos: novos });
   if (!r) return;
 
-  const qtdAdicionados = r.adicionados ? r.adicionados.length : 0;
-  const duplicados = r.duplicados || [];
+  const qtd  = r.adicionados ? r.adicionados.length : 0;
+  const dups = r.duplicados  || [];
 
-  if (qtdAdicionados === 0 && duplicados.length > 0) {
-    notify(`⚠️ Nenhum boleto novo — ${duplicados.length} já estavam cadastrados.`);
-  } else if (duplicados.length > 0) {
-    notify(`✓ ${qtdAdicionados} adicionado(s). Ignorados (já existiam): ${duplicados.join(', ')}`);
+  if (qtd === 0 && dups.length > 0) {
+    notify(`⚠️ Nenhum boleto novo — ${dups.length} já cadastrados (mesmo ID Fácil).`);
+  } else if (dups.length > 0) {
+    notify(`✓ ${qtd} importado(s). Ignorados (já existiam): ${dups.length}`);
   } else {
-    notify(`✓ ${qtdAdicionados} boleto(s) adicionado(s)!`);
+    notify(`✓ ${qtd} boleto(s) importado(s) com sucesso!`);
   }
 
   fecharModal('modal-add');
@@ -1478,77 +2249,108 @@ async function salvarBoletos() {
   await carregarDados();
 }
 
-function parseBlocoFacil123(texto) {
-  // Normaliza: remove \r, divide por \n, limpa espaços
-  const linhas = texto.replace(/\r/g, '').split('\n').map(l => l.trim()).filter(l => l);
+
+// ─── PARSER CSV FÁCIL123 ─────────────────────────────────────────────────────
+// Substitui o antigo parseBlocoFacil123.
+// Aceita CSV com ; ou , como separador. Filtra apenas:
+//   tipo = "Recebimento" E categoria 1 = "Receitas: Vendas" (ou contém "Vendas")
+// Retorna objetos com: { facilId, titularId, nome, valor, vencimento,
+//                        dataPagamento, juros, valorTotal, realizado }
+function parseCSVFacil123(texto) {
+  const linhas = texto.replace(/\r/g, '').split('\n').filter(l => l.trim());
+  if (linhas.length < 2) return [];
+
+  // Detectar separador (;  ou ,)
+  const cabecalho = linhas[0];
+  const sep = cabecalho.includes(';') ? ';' : ',';
+
+  // Mapear índices das colunas pelo cabeçalho
+  const cols = cabecalho.split(sep).map(c => c.trim().replace(/^"|"$/g, '').toLowerCase());
+  const idx = name => cols.indexOf(name);
+
+  const iId    = idx('id');
+  const iTipo  = idx('tipo');
+  const iTitId = idx('titular id');
+  const iTit   = idx('titular');
+  const iData  = idx('data');
+  const iVence = idx('vence em');
+  const iPago  = idx('pago em');
+  const iValor = idx('valor');
+  const iReal  = idx('realizado');
+  const iCat1  = idx('categoria 1');
+  const iVCat1 = idx('valor da categoria 1');
+  const iCat2  = idx('categoria 2');
+  const iVCat2 = idx('valor da categoria 2');
+
+  if (iId === -1 || iTipo === -1) return []; // CSV inválido
+
+  const fmtData = s => {
+    if (!s || s.trim() === '') return '';
+    // "15/06/2026 00:00" ou "15/06/2026 12:00"
+    const m = s.trim().match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (m) return m[1].padStart(2,'0') + '/' + m[2].padStart(2,'0') + '/' + m[3];
+    return s.trim();
+  };
+
+  const fmtValor = s => {
+    if (!s || s.trim() === '') return '0,00';
+    const v = parseFloat(s.trim().replace(/\./g,'').replace(',','.'));
+    if (isNaN(v)) return '0,00';
+    return v.toFixed(2).replace('.',',');
+  };
+
+  const limparNome = nome => {
+    let n = String(nome || '').trim();
+    // Remove CPF/CNPJ colado no final (ex: "Luciana... 98003127149")
+    n = n.replace(/\s+\d{9,14}$/, '').trim();
+    // Capitaliza
+    return n.split(' ').map(w => w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : '').join(' ').trim();
+  };
+
   const resultado = [];
-  let i = 0;
 
-  while (i < linhas.length) {
-    // Linha de data: começa com DD/MM seguido de tab ou espaço e "Receitas"
-    // Ex: "27/04\tReceitas: Vendas"  ou só "27/04/2025\tReceitas: Vendas"
-    const dataMatch = linhas[i].match(/^(\d{2}\/\d{2}(?:\/\d{4})?)\s/);
-
-    if (dataMatch) {
-      const dataRaw = dataMatch[1]; // "27/04" ou "27/04/2025"
-      // Monta data completa
-      const partes = dataRaw.split('/');
-      const ano = partes[2] ? partes[2] : new Date().getFullYear().toString();
-      const vencimento = partes[0] + '/' + partes[1] + '/' + ano;
-
-      i++; // próxima linha = nome * venda
-      if (i >= linhas.length) break;
-
-      const vendaMatch = linhas[i].match(/^(.+?)\s*\*\s*Venda\s+(\d+)(?:\s*\*\s*(\d+\/\d+))?/i);
-      if (vendaMatch) {
-        let nome = vendaMatch[1].trim();
-        // Remove CPF/CNPJ prefixos numéricos (ex: "48 296 931 NOME..." ou "51.307.054/0001 NOME")
-        nome = nome.replace(/^\d[\d.\/ \-]*\s+/, '').trim();
-        // Remove TUDO após qualquer * — sufixos como "* Cliente Negativado",
-        // "* Boleto Negativado", "* Cliente Do Golpe", "* César - Aparentemente..."
-        nome = nome.replace(/\s*\*.*$/, '').trim();
-        // Remove colchetes ou outros caracteres residuais
-        nome = nome.replace(/[\[\]]/g, '').trim();
-        // Capitaliza
-        nome = nome.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-
-        const venda   = vendaMatch[2];
-        const parcela = vendaMatch[3] || '';
-
-        i++; // próxima linha = valor
-        let valor = '';
-        if (i < linhas.length) {
-          // Valor: pode ser "1.001,50" ou "1001,50" — pega linha que parece número
-          const valorMatch = linhas[i].match(/^[\d.,]+$/);
-          if (valorMatch) {
-            // Remove ponto de milhar, mantém vírgula decimal e garante 2 casas
-            const vRaw = linhas[i].replace(/\./g, '').replace(',', '.');
-            const vNum = parseFloat(vRaw);
-            valor = isNaN(vNum) ? linhas[i] : vNum.toFixed(2).replace('.', ',');
-            i++;
-          }
-        }
-
-        resultado.push({ nome, venda, parcela, valor, vencimento, dataPagamento: vencimento });
-      } else {
-        i++; // linha inesperada, avança
-      }
-    } else {
-      // Tenta parsear linha avulsa no formato antigo (sem linha de data acima)
-      const vendaMatch = linhas[i].match(/^(.+?)\s*\*\s*Venda\s+(\d+)(?:\s*\*\s*(\d+\/\d+))?/i);
-      if (vendaMatch) {
-        let nome = vendaMatch[1].trim().replace(/^\d[\d.\/ \-]*\s+/, '').trim();
-        nome = nome.replace(/\s*\*.*$/, '').trim();
-        nome = nome.replace(/[\[\]]/g, '').trim();
-        nome = nome.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-        resultado.push({ nome, venda: vendaMatch[2], parcela: vendaMatch[3] || '', valor: '', vencimento: '', dataPagamento: '' });
-      }
-      i++;
+  for (let i = 1; i < linhas.length; i++) {
+    // Dividir preservando campos entre aspas
+    const campos = [];
+    let campo = '', dentroAspas = false;
+    for (const ch of linhas[i]) {
+      if (ch === '"') { dentroAspas = !dentroAspas; }
+      else if (ch === sep && !dentroAspas) { campos.push(campo); campo = ''; }
+      else campo += ch;
     }
+    campos.push(campo);
+
+    const get = n => (campos[n] || '').trim().replace(/^"|"$/g,'');
+
+    const tipo  = get(iTipo).toLowerCase();
+    const cat1  = get(iCat1).toLowerCase();
+    const real  = get(iReal);
+
+    // Só importa Recebimentos com categoria Vendas
+    if (!tipo.includes('recebimento')) continue;
+    if (!cat1.includes('venda')) continue;
+
+    const facilId    = get(iId);
+    const titularId  = get(iTitId);
+    const nome       = limparNome(get(iTit));
+    const vencimento = fmtData(get(iVence));
+    const dataPagamento = fmtData(get(iPago));
+    const valor      = fmtValor(get(iVCat1));   // principal sem juros
+    const juros      = fmtValor(get(iVCat2));   // juros/multa (pode ser 0)
+    const valorTotal = fmtValor(get(iValor));    // total pago
+    const realizado  = real.toLowerCase() === 'sim' ? 'sim' : 'nao';
+    const status     = realizado === 'sim' ? 'pago' : 'pendente';
+
+    if (!facilId || !nome || !vencimento) continue;
+
+    resultado.push({ facilId, titularId, nome, valor, vencimento, dataPagamento, juros, valorTotal, realizado, status });
   }
 
   return resultado;
 }
+
+// Alias para compatibilidade com chamadas antigas na conciliação
+function parseBlocoFacil123(texto) { return parseCSVFacil123(texto); }
 
 // ─── RENDER ───────────────────────────────────────────────────────────────────
 function normalizarParcela(val) {
@@ -1650,16 +2452,17 @@ function limparFiltros() {
 function renderTabela() {
   const busca   = document.getElementById('busca').value.toLowerCase();
   const fNome   = document.getElementById('f-nome') ? document.getElementById('f-nome').value.toLowerCase() : '';
-  const fVenda  = document.getElementById('f-venda') ? document.getElementById('f-venda').value.trim() : '';
+  // fVenda removido — agora usa f-facilid
   const fstatus = document.getElementById('filtro-status').value;
   const fdata   = document.getElementById('filtro-data').value;
   const fserasa = document.getElementById('filtro-serasa').value;
   const fProx   = document.getElementById('f-prox') ? document.getElementById('f-prox').value : '';
 
   let lista = boletos.filter(b => {
-    const matchBusca  = !busca  || b.nome.toLowerCase().includes(busca) || b.venda.includes(busca);
+    const matchBusca  = !busca  || b.nome.toLowerCase().includes(busca) || (b.facilId||'').includes(busca);
     const matchNome   = !fNome  || b.nome.toLowerCase().includes(fNome);
-    const matchVenda  = !fVenda || b.venda.includes(fVenda);
+    const fFacil  = document.getElementById('f-facilid') ? document.getElementById('f-facilid').value.trim() : '';
+    const matchVenda  = !fFacil || (b.facilId||'').includes(fFacil);
     const matchStatus = !fstatus || b.status === fstatus;
     const matchData   = !fdata  || normalizarData(b.vencimento) === formatarData(fdata);
     const matchSerasa = !fserasa || (b.serasa || 'nao') === fserasa;
@@ -1700,7 +2503,7 @@ function renderTabela() {
 
   const tbody = document.getElementById('tabela-body');
   if (lista.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10"><div class="empty">Nenhum boleto encontrado.</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty">Nenhum boleto encontrado.</div></td></tr>';
     return;
   }
 
@@ -1738,7 +2541,7 @@ function renderTabela() {
       const jurosClass = juros > 0.01 ? 'positivo' : 'zero';
       const jurosStr   = juros > 0.01 ? `+${fmtBR(juros)}` : 'Sem juros';
       linhaJuros = `<tr class="linha-juros" id="juros-${b.id}" style="display:none;">
-        <td colspan="10">
+        <td colspan="9">
           <div class="juros-grid">
             <div class="juros-item"><span class="juros-label">Principal</span><span class="juros-valor">${fmtBR(principal)}</span></div>
             <div class="juros-item"><span class="juros-label">Recebido</span><span class="juros-valor">${fmtBR(recebido)}</span></div>
@@ -1765,8 +2568,7 @@ function renderTabela() {
     const proxStyle = (!isPago && proxVenc && proxVenc < hoje) ? 'color:var(--danger);font-weight:600;' : 'color:var(--text2);';
     return `<tr class="${isPago ? 'linha-paga' : alerta}">
       <td class="col-nome nome-cell" title="${b.nome}">${seta}${b.nome}</td>
-      <td class="col-venda">${b.venda}</td>
-      <td class="col-parc">${normalizarParcela(b.parcela)}</td>
+      <td class="col-facilid" title="ID Fácil123: ${b.facilId||'—'}">${b.facilId||'—'}</td>
       <td class="col-valor valor-cell">R$ ${normalizarValor(b.valor)}</td>
       <td class="col-venc">${celVenc}${!isPago ? tagAlerta(b) : ''}</td>
       <td class="col-status"><span class="badge ${statusBadge[b.status]||'b-pendente'}">${statusLabel[b.status]||b.status}</span></td>
@@ -1783,7 +2585,7 @@ function renderTabela() {
     html += acordosReal.map(gerarLinha).join('');
   }
   if (pagos.length > 0) {
-    html += `<tr class="separador-pago"><td colspan="10">✓ Pagos (${pagos.length})</td></tr>`;
+    html += `<tr class="separador-pago"><td colspan="9">✓ Pagos (${pagos.length})</td></tr>`;
     html += pagos.map(gerarLinha).join('');
   }
   if (cancelados.length > 0) {
@@ -1847,9 +2649,18 @@ function renderTabela() {
   document.getElementById('boleto-cards').innerHTML = mobileHtml;
 }
 
+let mesOffsetVenc = 0;
+
+function navMesVenc(delta) {
+  if (delta === 0) { mesOffsetVenc = 0; }
+  else { mesOffsetVenc += delta; }
+  renderSummary();
+}
+
 function renderSummary() {
   const toFloat = b => parseFloat((normalizarValor(b.valor||'0')).replace(/\./g,'').replace(',','.')) || 0;
   const fmtBR   = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const fmtPct  = (val, total) => total > 0 ? (val / total * 100).toFixed(1) + '%' : '0%';
 
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const toDate = b => {
@@ -1857,30 +2668,64 @@ function renderSummary() {
     const p = d.split('/'); return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
   };
 
-  // Exclui pago E acordo_realizado dos "ativos" (não são inadimplentes)
-  const baixados  = ['pago', 'acordo_realizado', 'cancelado'];
-  const ativos    = boletos.filter(b => !baixados.includes(b.status));
-  const pagos     = boletos.filter(b => b.status === 'pago');
-  const acordos   = boletos.filter(b => b.status === 'acordo_realizado');
-  const vencidos  = ativos.filter(b => { const d=toDate(b); return d && d < hoje; });
+  const baixados = ['pago', 'acordo_realizado', 'cancelado'];
+  const ativos   = boletos.filter(b => !baixados.includes(b.status));
+  const pagos    = boletos.filter(b => b.status === 'pago');
+  const acordos  = boletos.filter(b => b.status === 'acordo_realizado');
+
+  // ── TAXA GLOBAL ─────────────────────────────────────────────
+  // Todos os vencidos (ativos, não pagos) ÷ total emitido (ativos + pagos, exceto cancelados)
+  const todosVencidos    = ativos.filter(b => { const d=toDate(b); return d && d < hoje; });
+  const todosEmitidos    = boletos.filter(b => b.status !== 'cancelado'); // toda carteira real
+  const totalEmitidoVal  = todosEmitidos.reduce((s,b)=>s+toFloat(b), 0);
+  const totalVencVal     = todosVencidos.reduce((s,b)=>s+toFloat(b), 0);
 
   const fmt = (n, v) => { const el = document.getElementById(n); if(el) el.textContent = v; };
-  fmt('s-venc',       vencidos.length);
-  fmt('s-venc-valor', fmtBR(vencidos.reduce((s,b)=>s+toFloat(b),0)));
 
-  // % inadimplência considera só os ativos reais (sem acordos realizados)
-  const totalGeral   = ativos.reduce((s,b) => s+toFloat(b), 0);
-  const valorVencido = vencidos.reduce((s,b) => s+toFloat(b), 0);
-  const pct = totalGeral > 0 ? (valorVencido / totalGeral * 100).toFixed(1) : 0;
-  fmt('s-venc-pct', pct + '% de inadimplência');
-  fmt('s-pago',       pagos.length);
-  fmt('s-pago-valor', fmtBR(pagos.reduce((s,b)=>s+toFloat(b),0)) + ' baixados');
-  fmt('s-acordo',       acordos.length);
-  fmt('s-acordo-valor', fmtBR(acordos.reduce((s,b)=>s+toFloat(b),0)));
-  fmt('s-pend',       boletos.filter(b=>b.status==='pendente').length);
-  fmt('s-prom',       boletos.filter(b=>b.status==='promessa').length);
+  fmt('s-venc-pct-global',
+    totalEmitidoVal > 0
+      ? fmtPct(totalVencVal, totalEmitidoVal) + ' (' + fmtBR(totalVencVal) + ' · ' + todosVencidos.length + ' bol.)'
+      : '0%'
+  );
+
+  // ── TAXA MENSAL ──────────────────────────────────────────────
+  // Vencidos do mês ÷ tudo que venceu naquele mês (pagos + pendentes, exceto cancelados)
+  const ref    = new Date(hoje.getFullYear(), hoje.getMonth() + mesOffsetVenc, 1);
+  const deMes  = new Date(ref.getFullYear(), ref.getMonth(), 1);
+  const ateMes = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
+  const nomeM  = ref.toLocaleDateString('pt-BR', {month:'short', year:'2-digit'})
+                    .replace('.','').replace(' de ','/');
+
+  // Todos os boletos que venceram nesse mês (base do denominador = emitidos no mês)
+  const emitidosNoMes  = todosEmitidos.filter(b => { const d=toDate(b); return d && d >= deMes && d <= ateMes; });
+  // Dos ativos, quais venceram nesse mês e já passaram do vencimento
+  const vencidosNoMes  = ativos.filter(b => { const d=toDate(b); return d && d >= deMes && d <= ateMes && d < hoje; });
+
+  const totalMesEmit = emitidosNoMes.reduce((s,b)=>s+toFloat(b), 0);
+  const vencMesVal   = vencidosNoMes.reduce((s,b)=>s+toFloat(b), 0);
+
+  // Botão do mês
+  const btnMes = document.getElementById('v-mes');
+  if (btnMes) btnMes.textContent = nomeM;
+
+  fmt('s-venc',       fmtBR(vencMesVal));
+  fmt('s-venc-valor', vencidosNoMes.length + ' boleto(s) em aberto');
+  fmt('s-venc-mes-label', 'Inadimplência — ' + nomeM);
+  fmt('s-venc-pct',
+    totalMesEmit > 0
+      ? fmtPct(vencMesVal, totalMesEmit)
+      : '0%'
+  );
+
+  fmt('s-pago',        pagos.length);
+  fmt('s-pago-valor',  fmtBR(pagos.reduce((s,b)=>s+toFloat(b),0)) + ' baixados');
+  fmt('s-acordo',      acordos.length);
+  fmt('s-acordo-valor',fmtBR(acordos.reduce((s,b)=>s+toFloat(b),0)));
+  fmt('s-pend',        boletos.filter(b=>b.status==='pendente').length);
+  fmt('s-prom',        boletos.filter(b=>b.status==='promessa').length);
 
   calcReceber();
+  calcRecebidos();
 }
 
 let periodoAtivo = 'mes';
@@ -1957,12 +2802,101 @@ function calcReceber() {
   document.getElementById('s-receber-periodo').textContent = label;
 }
 
+// ─── RECEBIDOS ───────────────────────────────────────────────────────────────
+let periodoAtivoRec = 'mes';
+let mesOffsetRec = 0;
+
+function navMesRec(delta) {
+  mesOffsetRec += delta;
+  setPeriodoRec('mes');
+}
+
+function setPeriodoRec(p) {
+  if (p !== 'mes') mesOffsetRec = 0;
+  periodoAtivoRec = p;
+  ['hoje','semana','mes','custom'].forEach(x => {
+    const el = document.getElementById('r-' + x);
+    if (el) el.classList.toggle('active', x === p);
+  });
+  const prev = document.getElementById('r-mes-prev');
+  const next = document.getElementById('r-mes-next');
+  if (prev) prev.classList.toggle('active', p === 'mes');
+  if (next) next.classList.toggle('active', p === 'mes');
+  document.getElementById('periodo-custom-rec').style.display = p === 'custom' ? 'flex' : 'none';
+  calcRecebidos();
+}
+
+function calcRecebidos() {
+  const toFloat = b => parseFloat((normalizarValor(b.valor||'0')).replace(/\./g,'').replace(',','.')) || 0;
+  const fmtBR   = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+  // Extrair data de pagamento: usa b.dataPagamento diretamente (campo CSV Fácil123)
+  const getDataPagamento = b => {
+    if (b.dataPagamento && b.dataPagamento !== '—' && b.dataPagamento !== '') {
+      const m = b.dataPagamento.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (m) return new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
+    }
+    const tratsValidas = (b.tratativas || []).filter(t => t.status === 'pago');
+    if (tratsValidas.length > 0) {
+      const s = String(tratsValidas[tratsValidas.length-1].dataHora || '').trim();
+      const m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (m) return new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
+    }
+    const d = normalizarData(b.vencimento);
+    if (!d || d === '—') return null;
+    const p = d.split('/');
+    if (p.length === 3) return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
+    return null;
+  };
+
+  let de, ate, label;
+  if (periodoAtivoRec === 'hoje') {
+    de = ate = new Date(hoje);
+    label = 'hoje';
+  } else if (periodoAtivoRec === 'semana') {
+    de  = new Date(hoje);
+    ate = new Date(hoje); ate.setDate(ate.getDate() + 6);
+    label = 'próximos 7 dias';
+  } else if (periodoAtivoRec === 'mes') {
+    const ref = new Date(hoje.getFullYear(), hoje.getMonth() + mesOffsetRec, 1);
+    de  = new Date(ref.getFullYear(), ref.getMonth(), 1);
+    ate = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
+    label = ref.toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+    const btnMes = document.getElementById('r-mes');
+    if (btnMes) btnMes.textContent = ref.toLocaleDateString('pt-BR', {month:'short', year:'2-digit'}).replace('.','').replace(' de ','/');
+  } else {
+    const vDe  = document.getElementById('r-de').value;
+    const vAte = document.getElementById('r-ate').value;
+    if (!vDe || !vAte) {
+      document.getElementById('s-recebido').textContent     = '—';
+      document.getElementById('s-recebido-qtd').textContent = 'defina o período';
+      document.getElementById('s-recebido-periodo').textContent = '';
+      return;
+    }
+    de  = new Date(vDe + 'T00:00:00');
+    ate = new Date(vAte + 'T00:00:00');
+    label = `${de.toLocaleDateString('pt-BR')} – ${ate.toLocaleDateString('pt-BR')}`;
+  }
+
+  const lista = boletos.filter(b => {
+    if (b.status !== 'pago') return false;
+    const dp = getDataPagamento(b);
+    if (!dp) return false;
+    return dp >= de && dp <= ate;
+  });
+
+  document.getElementById('s-recebido').textContent     = fmtBR(lista.reduce((s,b)=>s+toFloat(b),0));
+  document.getElementById('s-recebido-qtd').textContent = lista.length + ' boleto(s)';
+  document.getElementById('s-recebido-periodo').textContent = label;
+}
+
 // ─── MODAIS ───────────────────────────────────────────────────────────────────
 function abrirTratativa(id) {
   boletoAtivo = boletos.find(b => b.id === id);
   if (!boletoAtivo) return;
   document.getElementById('mt-nome').textContent = boletoAtivo.nome;
-  document.getElementById('mt-info').textContent = `Venda ${boletoAtivo.venda}${boletoAtivo.parcela ? ' · Parcela '+boletoAtivo.parcela : ''} · R$ ${boletoAtivo.valor} · Venc. ${boletoAtivo.vencimento}`;
+  document.getElementById('mt-info').textContent = `R$ ${normalizarValor(boletoAtivo.valor)} · Venc. ${boletoAtivo.vencimento}${boletoAtivo.facilId ? ' · ID: ' + boletoAtivo.facilId : ''}`;
   document.getElementById('t-status').value = boletoAtivo.status || 'pendente';
   document.getElementById('t-obs').value = '';
   setSerasa(boletoAtivo.serasa || 'nao');
@@ -1977,6 +2911,7 @@ function abrirTratativa(id) {
 function abrirAddBoleto() {
   limparFormAdd();
   document.getElementById('modal-add').classList.add('open');
+  setTimeout(initDropZones, 50);
 }
 
 function fecharModal(id) {
@@ -2045,9 +2980,142 @@ function formatarData(d) {
 }
 
 function limparFormAdd() {
-  ['add-paste','add-nome','add-venda','add-parcela','add-valor'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('add-venc').value = '';
+  resetDropZone();
+  resetDropZoneUpdate();
+  const ur = document.getElementById('update-result'); if (ur) ur.classList.remove('show');
+  setTabAdd('importar');
 }
+
+// ─── LEITURA DE ARQUIVO CSV ───────────────────────────────────────────────────
+
+// Armazena o conteúdo lido do arquivo para uso posterior
+let csvImportContent   = '';
+let csvUpdateContent   = '';
+
+function lerArquivoCSV(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    csvImportContent = e.target.result;
+    const parsed = parseCSVFacil123(csvImportContent);
+    const preview = document.getElementById('csv-preview');
+    const btn     = document.getElementById('btn-salvar-boletos');
+    const dz      = document.getElementById('drop-zone');
+
+    if (parsed.length === 0) {
+      preview.style.display = 'block';
+      preview.style.background = 'var(--danger-bg)';
+      preview.style.borderColor = 'var(--danger)';
+      preview.innerHTML = '❌ Nenhum boleto de Recebimento/Vendas encontrado. Verifique se é o arquivo correto.';
+      btn.style.display = 'none';
+    } else {
+      const pagos     = parsed.filter(b => b.realizado === 'sim').length;
+      const pendentes = parsed.filter(b => b.realizado === 'nao').length;
+      preview.style.display = 'block';
+      preview.style.background = 'var(--accent-bg)';
+      preview.style.borderColor = 'var(--accent)';
+      preview.innerHTML = `✅ <strong>${parsed.length} boleto(s)</strong> encontrados em <strong>${file.name}</strong><br>
+        ${pagos} pagos · ${pendentes} pendentes`;
+      btn.style.display = 'block';
+      dz.style.borderColor  = 'var(--accent)';
+      dz.style.background   = 'var(--accent-bg)';
+      dz.innerHTML = `<div style="font-size:24px;margin-bottom:6px;">📄</div>
+        <div style="font-weight:600;color:var(--accent);">${file.name}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Clique para trocar o arquivo</div>
+        <input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none;" onchange="lerArquivoCSV(this.files[0])">`;
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function lerArquivoCSVUpdate(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    csvUpdateContent = e.target.result;
+    const parsed  = parseCSVFacil123(csvUpdateContent);
+    const preview = document.getElementById('update-preview');
+    const btn     = document.getElementById('btn-atualizar-massa');
+    const dz      = document.getElementById('drop-zone-update');
+
+    if (parsed.length === 0) {
+      preview.style.display = 'block';
+      preview.style.background = 'var(--danger-bg)';
+      preview.style.borderColor = 'var(--danger)';
+      preview.innerHTML = '❌ Nenhum boleto encontrado. Verifique o arquivo.';
+      btn.style.display = 'none';
+    } else {
+      preview.style.display = 'block';
+      preview.style.background = 'var(--accent-bg)';
+      preview.style.borderColor = 'var(--accent)';
+      preview.innerHTML = `✅ <strong>${parsed.length} boleto(s)</strong> em <strong>${file.name}</strong> prontos para comparação.`;
+      btn.style.display = 'block';
+      dz.style.borderColor = 'var(--accent)';
+      dz.style.background  = 'var(--accent-bg)';
+      dz.innerHTML = `<div style="font-size:24px;margin-bottom:6px;">📄</div>
+        <div style="font-weight:600;color:var(--accent);">${file.name}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Clique para trocar o arquivo</div>
+        <input type="file" id="csv-file-update" accept=".csv,.txt" style="display:none;" onchange="lerArquivoCSVUpdate(this.files[0])">`;
+    }
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function resetDropZone() {
+  csvImportContent = '';
+  const btn = document.getElementById('btn-salvar-boletos');
+  if (btn) btn.style.display = 'none';
+  const preview = document.getElementById('csv-preview');
+  if (preview) preview.style.display = 'none';
+  const dz = document.getElementById('drop-zone');
+  if (dz) dz.innerHTML = `<div style="font-size:32px;margin-bottom:8px;">📂</div>
+    <div style="font-weight:600;color:var(--text);margin-bottom:4px;">Clique para selecionar o arquivo CSV</div>
+    <div style="font-size:12px;color:var(--text3);">ou arraste e solte aqui</div>
+    <input type="file" id="csv-file-input" accept=".csv,.txt" style="display:none;" onchange="lerArquivoCSV(this.files[0])">`;
+  if (dz) { dz.style.borderColor = 'var(--border2)'; dz.style.background = 'var(--surface2)'; }
+}
+
+function resetDropZoneUpdate() {
+  csvUpdateContent = '';
+  const btn = document.getElementById('btn-atualizar-massa');
+  if (btn) btn.style.display = 'none';
+  const preview = document.getElementById('update-preview');
+  if (preview) preview.style.display = 'none';
+  const res = document.getElementById('update-result');
+  if (res) res.classList.remove('show');
+  const dz = document.getElementById('drop-zone-update');
+  if (dz) dz.innerHTML = `<div style="font-size:32px;margin-bottom:8px;">📂</div>
+    <div style="font-weight:600;color:var(--text);margin-bottom:4px;">Clique para selecionar o arquivo CSV</div>
+    <div style="font-size:12px;color:var(--text3);">ou arraste e solte aqui</div>
+    <input type="file" id="csv-file-update" accept=".csv,.txt" style="display:none;" onchange="lerArquivoCSVUpdate(this.files[0])">`;
+  if (dz) { dz.style.borderColor = 'var(--border2)'; dz.style.background = 'var(--surface2)'; }
+}
+
+// Inicializar drag & drop nas drop zones
+function initDropZones() {
+  ['drop-zone','drop-zone-update'].forEach(id => {
+    const dz = document.getElementById(id);
+    if (!dz) return;
+    dz.addEventListener('dragover', e => {
+      e.preventDefault();
+      dz.style.borderColor = 'var(--accent)';
+      dz.style.background  = 'var(--accent-bg)';
+    });
+    dz.addEventListener('dragleave', () => {
+      dz.style.borderColor = 'var(--border2)';
+      dz.style.background  = 'var(--surface2)';
+    });
+    dz.addEventListener('drop', e => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      if (id === 'drop-zone')        lerArquivoCSV(file);
+      if (id === 'drop-zone-update') lerArquivoCSVUpdate(file);
+    });
+  });
+}
+
+
 
 function mostrarLoading(show) {
   document.getElementById('loading').classList.toggle('show', show);
@@ -2380,7 +3448,7 @@ function renderClientes() {
         </div>
         <div class="cli-body" id="cli-body-${idx}">
           <table class="cli-sub">
-            <thead><tr><th>Venda</th><th>Parc.</th><th style="text-align:right;">Valor</th><th>Vencimento</th><th>Status</th><th>Serasa</th><th></th></tr></thead>
+            <thead><tr><th>ID Fácil</th><th style="text-align:right;">Valor</th><th>Vencimento</th><th>Status</th><th>Serasa</th><th></th></tr></thead>
             <tbody>${linhas}</tbody>
           </table>
         </div>
