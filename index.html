@@ -67,14 +67,15 @@
   .banner-input-row button { padding: 7px 14px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; font-weight: 500; white-space: nowrap; }
 
   /* Summary cards */
-  .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 1rem; align-items: start; }
   .btn-periodo { padding:3px 8px; font-size:11px; border:1px solid var(--border2); border-radius:4px; background:var(--surface); color:var(--text2); cursor:pointer; white-space:nowrap; }
   .btn-periodo:hover { background:var(--surface2); }
   .btn-periodo.active { background:var(--blue-bg); color:var(--blue-text); border-color:var(--blue-text); font-weight:600; }
-  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
-  .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .stat-value { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; }
-  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; min-width: 0; }
+  .stat-label { font-size: 10px; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; }
+  .stat-value { font-size: clamp(19px, 1.7vw, 24px); font-weight: 650; color: var(--text); line-height: 1.08; white-space: nowrap; letter-spacing: 0; }
+  .stat-sub { font-size: 10.5px; color: var(--text3); margin-top: 3px; line-height: 1.25; }
+  .stat-card > div[style*="border-top"] { margin-top: 7px !important; padding-top: 7px !important; }
 
   /* Toolbar */
   .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
@@ -471,11 +472,35 @@
 
   <div class="loading-bar" id="loading"></div>
 
+  <div class="stat-card" style="margin-bottom:10px;border-top:3px solid var(--accent);">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div>
+        <div class="stat-label" style="margin-bottom:2px;">Periodo dos cards</div>
+        <div class="stat-sub" id="g-periodo-label" style="font-size:11px;color:var(--text3);">Mes atual</div>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+        <button class="btn-periodo" id="g-hoje" onclick="setPeriodoDashboard('hoje')">Hoje</button>
+        <button class="btn-periodo" id="g-semana" onclick="setPeriodoDashboard('semana')">Semana</button>
+        <div style="display:flex;align-items:center;gap:0;">
+          <button class="btn-periodo" id="g-mes-prev" onclick="navMesDashboard(-1)" style="border-radius:4px 0 0 4px;padding:3px 7px;border-right:none;">&lt;</button>
+          <button class="btn-periodo active" id="g-mes" onclick="setPeriodoDashboard('mes')" style="border-radius:0;border-right:none;border-left:none;">Mes</button>
+          <button class="btn-periodo" id="g-mes-next" onclick="navMesDashboard(+1)" style="border-radius:0 4px 4px 0;padding:3px 7px;">&gt;</button>
+        </div>
+        <button class="btn-periodo" id="g-custom" onclick="setPeriodoDashboard('custom')">Personalizado</button>
+      </div>
+    </div>
+    <div id="periodo-custom-dashboard" style="display:none;gap:6px;margin-top:8px;align-items:center;">
+      <input type="date" id="g-de" onchange="renderSummary()" style="padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;" />
+      <span style="font-size:12px;color:var(--text3);">ate</span>
+      <input type="date" id="g-ate" onchange="renderSummary()" style="padding:3px 6px;font-size:12px;border:1px solid var(--border);border-radius:4px;" />
+    </div>
+  </div>
+
   <div class="summary-grid" id="summary-grid">
     <div class="stat-card" style="border-top:3px solid var(--danger);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <div class="stat-label" style="color:var(--danger);margin-bottom:0;">🔴 Vencidos</div>
-        <div style="display:flex;gap:4px;">
+        <div style="display:none;gap:4px;">
           <button class="btn-periodo" id="v-mes-prev" onclick="navMesVenc(-1)" style="border-radius:4px 0 0 4px;padding:3px 7px;border-right:none;">‹</button>
           <button class="btn-periodo active" id="v-mes" onclick="navMesVenc(0)" style="border-radius:0;border-right:none;border-left:none;">Mês</button>
           <button class="btn-periodo" id="v-mes-next" onclick="navMesVenc(+1)" style="border-radius:0 4px 4px 0;padding:3px 7px;">›</button>
@@ -494,10 +519,10 @@
         <div id="s-venc-pct-global" style="font-size:15px;font-weight:600;color:var(--text2);">—</div>
       </div>
     </div>
-    <div class="stat-card" style="border-top:3px solid var(--blue-text); grid-column: span 2;">
+    <div class="stat-card" style="border-top:3px solid var(--blue-text);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <div class="stat-label" style="color:var(--blue-text);margin-bottom:0;">🔵 A receber</div>
-        <div style="display:flex;gap:4px;">
+        <div style="display:none;gap:4px;">
           <button class="btn-periodo" id="p-hoje"    onclick="setPeriodo('hoje')"   >Hoje</button>
           <button class="btn-periodo" id="p-semana"  onclick="setPeriodo('semana')">Semana</button>
           <div style="display:flex;align-items:center;gap:0;">
@@ -519,10 +544,10 @@
       </div>
       <div class="stat-sub" id="s-receber-periodo" style="color:var(--text3);margin-top:2px;font-size:11px;"></div>
     </div>
-    <div class="stat-card" style="border-top:3px solid #25d366; grid-column: span 2;">
+    <div class="stat-card" style="border-top:3px solid #25d366;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <div class="stat-label" style="color:#128c42;margin-bottom:0;">✅ Recebidos</div>
-        <div style="display:flex;gap:4px;">
+        <div style="display:none;gap:4px;">
           <button class="btn-periodo" id="r-hoje"    onclick="setPeriodoRec('hoje')">Hoje</button>
           <button class="btn-periodo" id="r-semana"  onclick="setPeriodoRec('semana')">Semana</button>
           <div style="display:flex;align-items:center;gap:0;">
@@ -2906,6 +2931,182 @@ function calcRecebidos() {
   document.getElementById('s-recebido-qtd').textContent = lista.length + ' boleto(s)';
   document.getElementById('s-recebido-periodo').textContent = label;
 }
+
+// Dashboard com periodo unico para Vencidos, A receber e Recebidos
+let periodoDashboard = 'mes';
+let mesOffsetDashboard = 0;
+
+function navMesDashboard(delta) {
+  mesOffsetDashboard += delta;
+  setPeriodoDashboard('mes');
+}
+
+function setPeriodoDashboard(p) {
+  if (p !== 'mes') mesOffsetDashboard = 0;
+  periodoDashboard = p;
+  periodoAtivo = p;
+  periodoAtivoRec = p;
+  mesOffset = mesOffsetDashboard;
+  mesOffsetRec = mesOffsetDashboard;
+  mesOffsetVenc = mesOffsetDashboard;
+
+  ['hoje','semana','mes','custom'].forEach(x => {
+    const el = document.getElementById('g-' + x);
+    if (el) el.classList.toggle('active', x === p);
+  });
+  const prev = document.getElementById('g-mes-prev');
+  const next = document.getElementById('g-mes-next');
+  if (prev) prev.classList.toggle('active', p === 'mes');
+  if (next) next.classList.toggle('active', p === 'mes');
+
+  const custom = document.getElementById('periodo-custom-dashboard');
+  if (custom) custom.style.display = p === 'custom' ? 'flex' : 'none';
+  renderSummary();
+}
+
+function getPeriodoDashboard() {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  let de, ate, label;
+
+  if (periodoDashboard === 'hoje') {
+    de = ate = new Date(hoje);
+    label = 'hoje';
+  } else if (periodoDashboard === 'semana') {
+    de = new Date(hoje);
+    ate = new Date(hoje); ate.setDate(ate.getDate() + 6);
+    label = 'proximos 7 dias';
+  } else if (periodoDashboard === 'mes') {
+    const ref = new Date(hoje.getFullYear(), hoje.getMonth() + mesOffsetDashboard, 1);
+    de = new Date(ref.getFullYear(), ref.getMonth(), 1);
+    ate = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
+    label = ref.toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+    const btnMes = document.getElementById('g-mes');
+    if (btnMes) btnMes.textContent = ref.toLocaleDateString('pt-BR', {month:'short', year:'2-digit'}).replace('.','').replace(' de ','/');
+  } else {
+    const vDe = document.getElementById('g-de') ? document.getElementById('g-de').value : '';
+    const vAte = document.getElementById('g-ate') ? document.getElementById('g-ate').value : '';
+    if (!vDe || !vAte) return { de: null, ate: null, label: 'defina o periodo' };
+    de = new Date(vDe + 'T00:00:00');
+    ate = new Date(vAte + 'T00:00:00');
+    label = `${de.toLocaleDateString('pt-BR')} - ${ate.toLocaleDateString('pt-BR')}`;
+  }
+
+  const lbl = document.getElementById('g-periodo-label');
+  if (lbl) lbl.textContent = label;
+  return { de, ate, label };
+}
+
+function dataBRToDate(valor) {
+  const d = normalizarData(valor);
+  if (!d || d === '—') return null;
+  const p = d.split('/');
+  if (p.length !== 3) return null;
+  return new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
+}
+
+function getDataPagamentoBoleto(b) {
+  if (b.dataPagamento && b.dataPagamento !== '—' && b.dataPagamento !== '') {
+    const dp = dataBRToDate(b.dataPagamento);
+    if (dp) return dp;
+  }
+  const tratsValidas = (b.tratativas || []).filter(t => t.status === 'pago');
+  if (tratsValidas.length > 0) {
+    const s = String(tratsValidas[tratsValidas.length - 1].dataHora || '').trim();
+    const m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (m) return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
+  }
+  return null;
+}
+
+function renderSummary() {
+  const toFloat = b => parseFloat((normalizarValor(b.valor || '0')).replace(/\./g,'').replace(',','.')) || 0;
+  const toFloatValor = val => parseFloat((normalizarValor(val || '0')).replace(/\./g,'').replace(',','.')) || 0;
+  const toFloatTotal = b => {
+    const raw = String(b.valorTotal || '').trim();
+    if (!raw || raw === '—') return toFloat(b);
+    return toFloatValor(raw) || toFloat(b);
+  };
+  const fmtBR = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const fmtPct = (val, total) => total > 0 ? (val / total * 100).toFixed(1) + '%' : '0%';
+  const fmt = (n, v) => { const el = document.getElementById(n); if (el) el.textContent = v; };
+
+  const periodo = getPeriodoDashboard();
+  if (!periodo.de || !periodo.ate) {
+    ['s-venc','s-receber','s-recebido'].forEach(id => fmt(id, '—'));
+    fmt('s-venc-valor', 'defina o periodo');
+    fmt('s-receber-qtd', 'defina o periodo');
+    fmt('s-recebido-qtd', 'defina o periodo');
+    fmt('s-receber-periodo', '');
+    fmt('s-recebido-periodo', '');
+    return;
+  }
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const baixados = ['pago', 'acordo_realizado', 'cancelado'];
+  const ativos = boletos.filter(b => !baixados.includes(b.status));
+  const pagos = boletos.filter(b => b.status === 'pago');
+  const acordos = boletos.filter(b => b.status === 'acordo_realizado');
+  const todosEmitidos = boletos.filter(b => b.status !== 'cancelado');
+
+  const noPeriodoPorVencimento = b => {
+    const d = dataBRToDate(b.vencimento);
+    return d && d >= periodo.de && d <= periodo.ate;
+  };
+
+  const todosVencidos = ativos.filter(b => {
+    const d = dataBRToDate(b.vencimento);
+    return d && d < hoje;
+  });
+  const totalEmitidoVal = todosEmitidos.reduce((s,b) => s + toFloat(b), 0);
+  const totalVencVal = todosVencidos.reduce((s,b) => s + toFloat(b), 0);
+  fmt('s-venc-pct-global',
+    totalEmitidoVal > 0
+      ? fmtPct(totalVencVal, totalEmitidoVal) + ' (' + fmtBR(totalVencVal) + ' · ' + todosVencidos.length + ' bol.)'
+      : '0%'
+  );
+
+  const emitidosPeriodo = todosEmitidos.filter(noPeriodoPorVencimento);
+  const vencidosPeriodo = ativos.filter(b => {
+    const d = dataBRToDate(b.vencimento);
+    return d && d >= periodo.de && d <= periodo.ate && d < hoje;
+  });
+  const receberPeriodo = ativos.filter(noPeriodoPorVencimento);
+  const recebidosPeriodo = pagos.filter(b => {
+    const dp = getDataPagamentoBoleto(b);
+    return dp && dp >= periodo.de && dp <= periodo.ate;
+  });
+
+  const totalPeriodoEmit = emitidosPeriodo.reduce((s,b) => s + toFloat(b), 0);
+  const vencPeriodoVal = vencidosPeriodo.reduce((s,b) => s + toFloat(b), 0);
+
+  fmt('s-venc', fmtBR(vencPeriodoVal));
+  fmt('s-venc-valor', vencidosPeriodo.length + ' boleto(s) em aberto');
+  fmt('s-venc-mes-label', 'Inadimplencia - ' + periodo.label);
+  fmt('s-venc-pct', totalPeriodoEmit > 0 ? fmtPct(vencPeriodoVal, totalPeriodoEmit) : '0%');
+
+  fmt('s-receber', fmtBR(receberPeriodo.reduce((s,b) => s + toFloat(b), 0)));
+  fmt('s-receber-qtd', receberPeriodo.length + ' boleto(s)');
+  fmt('s-receber-periodo', periodo.label);
+
+  fmt('s-recebido', fmtBR(recebidosPeriodo.reduce((s,b) => s + toFloatTotal(b), 0)));
+  fmt('s-recebido-qtd', recebidosPeriodo.length + ' boleto(s)');
+  fmt('s-recebido-periodo', periodo.label);
+
+  fmt('s-pago', pagos.length);
+  fmt('s-pago-valor', fmtBR(pagos.reduce((s,b) => s + toFloatTotal(b), 0)) + ' baixados');
+  fmt('s-acordo', acordos.length);
+  fmt('s-acordo-valor', fmtBR(acordos.reduce((s,b) => s + toFloat(b), 0)));
+  fmt('s-pend', boletos.filter(b => b.status === 'pendente').length);
+  fmt('s-prom', boletos.filter(b => b.status === 'promessa').length);
+}
+
+function navMesVenc(delta) { navMesDashboard(delta); }
+function navMes(delta) { navMesDashboard(delta); }
+function navMesRec(delta) { navMesDashboard(delta); }
+function setPeriodo(p) { setPeriodoDashboard(p); }
+function setPeriodoRec(p) { setPeriodoDashboard(p); }
+function calcReceber() { renderSummary(); }
+function calcRecebidos() { renderSummary(); }
 
 // ─── MODAIS ───────────────────────────────────────────────────────────────────
 function abrirTratativa(id) {
