@@ -2322,21 +2322,30 @@ function parseCSVFacil123(texto) {
 
     const get = n => (campos[n] || '').trim().replace(/^"|"$/g,'');
 
-    const tipo  = get(iTipo).toLowerCase();
-    const cat1  = get(iCat1).toLowerCase();
+    const normalizaTexto = s => String(s || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+    const tipo  = normalizaTexto(get(iTipo));
+    const cat1  = normalizaTexto(get(iCat1));
+    const cat2  = normalizaTexto(get(iCat2));
     const real  = get(iReal);
 
     // Só importa Recebimentos com categoria Vendas
     if (!tipo.includes('recebimento')) continue;
-    if (!cat1.includes('venda')) continue;
+    if (!cat1.includes('venda') && !cat2.includes('venda')) continue;
 
     const facilId    = get(iId);
     const titularId  = get(iTitId);
     const nome       = limparNome(get(iTit));
     const vencimento = fmtData(get(iVence));
     const dataPagamento = fmtData(get(iPago));
-    const valor      = fmtValor(get(iVCat1));   // principal sem juros
-    const juros      = fmtValor(get(iVCat2));   // juros/multa (pode ser 0)
+    const valorCat1  = fmtValor(get(iVCat1));
+    const valorCat2  = fmtValor(get(iVCat2));
+    const valor      = cat1.includes('venda') ? valorCat1 : valorCat2; // principal sem juros
+    const juros      = (cat1.includes('juro') || cat1.includes('multa')) ? valorCat1
+                     : ((cat2.includes('juro') || cat2.includes('multa')) ? valorCat2 : '0,00');
     const valorTotal = fmtValor(get(iValor));    // total pago
     const realizado  = real.toLowerCase() === 'sim' ? 'sim' : 'nao';
     const status     = realizado === 'sim' ? 'pago' : 'pendente';
@@ -2659,6 +2668,11 @@ function navMesVenc(delta) {
 
 function renderSummary() {
   const toFloat = b => parseFloat((normalizarValor(b.valor||'0')).replace(/\./g,'').replace(',','.')) || 0;
+  const toFloatTotal = b => {
+    const raw = String(b.valorTotal || '').trim();
+    if (!raw || raw === '—') return toFloat(b);
+    return parseFloat((normalizarValor(raw)).replace(/\./g,'').replace(',','.')) || toFloat(b);
+  };
   const fmtBR   = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const fmtPct  = (val, total) => total > 0 ? (val / total * 100).toFixed(1) + '%' : '0%';
 
@@ -2718,7 +2732,7 @@ function renderSummary() {
   );
 
   fmt('s-pago',        pagos.length);
-  fmt('s-pago-valor',  fmtBR(pagos.reduce((s,b)=>s+toFloat(b),0)) + ' baixados');
+  fmt('s-pago-valor',  fmtBR(pagos.reduce((s,b)=>s+toFloatTotal(b),0)) + ' baixados');
   fmt('s-acordo',      acordos.length);
   fmt('s-acordo-valor',fmtBR(acordos.reduce((s,b)=>s+toFloat(b),0)));
   fmt('s-pend',        boletos.filter(b=>b.status==='pendente').length);
@@ -2827,7 +2841,13 @@ function setPeriodoRec(p) {
 }
 
 function calcRecebidos() {
-  const toFloat = b => parseFloat((normalizarValor(b.valor||'0')).replace(/\./g,'').replace(',','.')) || 0;
+  const toFloatValor = val => parseFloat((normalizarValor(val||'0')).replace(/\./g,'').replace(',','.')) || 0;
+  const toFloat = b => toFloatValor(b.valor);
+  const toFloatRecebido = b => {
+    const raw = String(b.valorTotal || '').trim();
+    if (!raw || raw === '—') return toFloat(b);
+    return toFloatValor(raw) || toFloat(b);
+  };
   const fmtBR   = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const hoje = new Date(); hoje.setHours(0,0,0,0);
 
@@ -2843,10 +2863,6 @@ function calcRecebidos() {
       const m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
       if (m) return new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
     }
-    const d = normalizarData(b.vencimento);
-    if (!d || d === '—') return null;
-    const p = d.split('/');
-    if (p.length === 3) return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
     return null;
   };
 
@@ -2886,7 +2902,7 @@ function calcRecebidos() {
     return dp >= de && dp <= ate;
   });
 
-  document.getElementById('s-recebido').textContent     = fmtBR(lista.reduce((s,b)=>s+toFloat(b),0));
+  document.getElementById('s-recebido').textContent     = fmtBR(lista.reduce((s,b)=>s+toFloatRecebido(b),0));
   document.getElementById('s-recebido-qtd').textContent = lista.length + ' boleto(s)';
   document.getElementById('s-recebido-periodo').textContent = label;
 }
