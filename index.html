@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2232,17 +2232,29 @@ async function gsCall(payload) {
   salvando = true;
   setBotoesSalvar(true);
   mostrarLoading(true);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
   try {
     const r = await fetch(url, {
       method: 'POST',
-      body: JSON.stringify(payload)
+      cache: 'no-store',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
     });
-    const data = await r.json();
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const txt = await r.text();
+    const data = JSON.parse(txt);
     return data;
   } catch(e) {
-    notify('Erro ao conectar com o Google Sheets. Verifique a URL do script.');
+    const msg = e && e.name === 'AbortError'
+      ? 'Tempo esgotado ao conectar com o Google Sheets. Tente atualizar novamente.'
+      : 'Erro ao conectar com o Google Sheets. Verifique a URL do script.';
+    notify(msg);
     return null;
   } finally {
+    clearTimeout(timeoutId);
     salvando = false;
     setBotoesSalvar(false);
     mostrarLoading(false);
