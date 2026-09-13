@@ -556,6 +556,7 @@
         <div class="stat-value" id="s-receber" style="color:var(--blue-text);">—</div>
         <div class="stat-sub" id="s-receber-qtd" style="color:var(--blue-text);">boletos</div>
       </div>
+      <button class="btn-periodo" onclick="verBoletosAReceber()" style="margin-top:7px;color:var(--blue-text);border-color:var(--blue-text);font-weight:600;">Ver</button>
       <div class="stat-sub" id="s-receber-periodo" style="color:var(--text3);margin-top:2px;font-size:11px;"></div>
     </div>
     <div class="stat-card" style="border-top:3px solid #25d366;">
@@ -2708,6 +2709,21 @@ function normalizarData(val) {
 
 const statusLabel = { pendente:'Pendente', contato:'Contato feito', promessa:'Promessa', escalado:'Escalado', pago:'Pago', acordo_realizado:'Acordo ✓', cancelado:'Cancelado' };
 const statusBadge = { pendente:'b-pendente', contato:'b-contato', promessa:'b-promessa', escalado:'b-escalado', pago:'b-pago', acordo_realizado:'b-acordo-realizado', cancelado:'b-cancelado' };
+let filtroEspecialTabela = null;
+
+function boletoNoPeriodoPorVencimento(b, periodo) {
+  const d = dataBRToDate(b.vencimento);
+  return d && periodo && periodo.de && periodo.ate && d >= periodo.de && d <= periodo.ate;
+}
+
+function verBoletosAReceber() {
+  filtroEspecialTabela = 'a_receber';
+  ordemAtual = { col: 'venc', dir: 'asc' };
+  atualizarIconesOrdem();
+  renderTabela();
+  notify('Mostrando boletos do card A receber.');
+  document.querySelector('.table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 function setOrdem(col) {
   if (ordemAtual.col === col) {
@@ -2736,9 +2752,10 @@ function atualizarIconesOrdem() {
 }
 
 function limparFiltros() {
+  filtroEspecialTabela = null;
   document.getElementById('busca').value = '';
   document.getElementById('f-nome').value = '';
-  document.getElementById('f-venda').value = '';
+  if (document.getElementById('f-facilid')) document.getElementById('f-facilid').value = '';
   document.getElementById('filtro-data').value = '';
   document.getElementById('filtro-status').value = '';
   document.getElementById('filtro-serasa').value = '';
@@ -2747,6 +2764,8 @@ function limparFiltros() {
 }
 
 function renderTabela() {
+  const periodoTabela = getPeriodoDashboard();
+  const baixadosTabela = ['pago', 'acordo_realizado', 'cancelado'];
   const busca   = document.getElementById('busca').value.toLowerCase();
   const fNome   = document.getElementById('f-nome') ? document.getElementById('f-nome').value.toLowerCase() : '';
   // fVenda removido — agora usa f-facilid
@@ -2763,11 +2782,13 @@ function renderTabela() {
     const matchStatus = !fstatus || b.status === fstatus;
     const matchData   = !fdata  || normalizarData(b.vencimento) === formatarData(fdata);
     const matchSerasa = !fserasa || (b.serasa || 'nao') === fserasa;
+    const matchEspecial = filtroEspecialTabela !== 'a_receber' ||
+      (!baixadosTabela.includes(b.status) && boletoNoPeriodoPorVencimento(b, periodoTabela));
     const matchProx   = !fProx  || (() => {
       const t = b.tratativas && b.tratativas.length > 0 ? b.tratativas[b.tratativas.length-1] : null;
       return t && t.proximo && normalizarData(t.proximo) === formatarData(fProx);
     })();
-    return matchBusca && matchNome && matchVenda && matchStatus && matchData && matchSerasa && matchProx;
+    return matchBusca && matchNome && matchVenda && matchStatus && matchData && matchSerasa && matchProx && matchEspecial;
   });
 
   // Helpers de ordenação
