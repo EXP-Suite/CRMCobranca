@@ -461,12 +461,27 @@
     <button class="btn" onclick="abrirResumoPorCliente()" title="Ver agrupado por cliente">👤 Por cliente</button>
     <button class="btn" onclick="abrirRelatorio()" title="Relatório de inadimplência">📊 Relatório</button>
     <button class="btn" onclick="abrirAcordos()" style="border-color:#7c3aed;color:#5b21b6;" title="Formalizar acordo com cliente"> Acordos</button>
+    <button class="btn" onclick="mostrarConfigScript(true)" title="Configurar conexão com Google Sheets">⚙ Sheets</button>
     <button class="btn" onclick="abrirBaixaPagamentos()" style="border-color:#25d366;color:#128c42;display:none;">✓ Baixar pagamentos</button>
     <button class="btn btn-primary" onclick="abrirAddBoleto()">📥 Importar CSV</button>
   </div>
 </div>
 
 <div class="main">
+
+  <div id="config-banner" class="hidden">
+    <div class="banner-icon">⚙</div>
+    <div class="banner-text">
+      <p><strong>Conexão com Google Sheets</strong><br>
+      Informe a URL publicada do Google Apps Script terminada em <code>/exec</code>. Se a URL antiga do deploy expirar ou retornar 404, o CRM não consegue sincronizar.</p>
+      <div class="banner-input-row">
+        <input type="text" id="script-url-input" placeholder="https://script.google.com/macros/s/.../exec">
+        <button onclick="salvarScriptUrl()">Salvar URL</button>
+        <button onclick="testarScriptUrl()" style="background:#6b6960;">Testar</button>
+      </div>
+      <p id="script-url-msg" style="margin-top:6px;"></p>
+    </div>
+  </div>
 
 
   <div class="loading-bar" id="loading"></div>
@@ -798,6 +813,7 @@
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button class="btn" style="flex:1;" onclick="resetDropZoneUpdate()">Limpar</button>
         <button id="btn-atualizar-massa" class="btn btn-primary" style="flex:2;padding:10px;background:#7c3aed;border-color:#7c3aed;display:none;" onclick="atualizarBoletosMassa()">⚡ Atualizar em massa</button>
+        <button id="btn-sync-oficial" class="btn btn-primary" style="flex:2;padding:10px;background:#1a5c38;border-color:#1a5c38;display:none;" onclick="sincronizarPeriodoOficial()">✓ Sincronizar oficial</button>
       </div>
       <div id="update-result" class="update-result"></div>
     </div>
@@ -1167,7 +1183,8 @@
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 let SHEET_ID = '14MLJyA_OxD73loTp8ju__imxmnIL859KJMHMbjeTYCc';
 let API_KEY  = '';
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxlcBL0dq8DjnPLQHqsRBh6LGSiuwl4gulN67vr2VryeG5kPJgW1nzL-yYG9kVc8_zVaA/exec';
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxlcBL0dq8DjnPLQHqsRBh6LGSiuwl4gulN67vr2VryeG5kPJgW1nzL-yYG9kVc8_zVaA/exec';
+let SCRIPT_URL = localStorage.getItem('crmScriptUrl') || DEFAULT_SCRIPT_URL;
 
 // Dados locais (cache)
 let boletos = [];
@@ -1179,8 +1196,51 @@ let ordemAtual = { col: 'venc', dir: 'asc' }; // ordenação atual da tabela
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 window.onload = () => {
+  initConfigScript();
   carregarDados();
 };
+
+function initConfigScript() {
+  const inp = document.getElementById('script-url-input');
+  if (inp) inp.value = SCRIPT_URL || '';
+}
+
+function mostrarConfigScript(show = true, msg = '') {
+  const banner = document.getElementById('config-banner');
+  const inp = document.getElementById('script-url-input');
+  const out = document.getElementById('script-url-msg');
+  if (inp) inp.value = SCRIPT_URL || '';
+  if (out && msg) out.textContent = msg;
+  if (banner) banner.classList.toggle('hidden', !show);
+}
+
+function salvarScriptUrl() {
+  const inp = document.getElementById('script-url-input');
+  const url = inp ? inp.value.trim() : '';
+  if (!url || !/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(url)) {
+    mostrarConfigScript(true, 'Informe uma URL valida do Apps Script terminada em /exec.');
+    return;
+  }
+  SCRIPT_URL = url;
+  localStorage.setItem('crmScriptUrl', url);
+  mostrarConfigScript(false, '');
+  notify('URL do Google Sheets salva.');
+  carregarDados();
+}
+
+async function testarScriptUrl() {
+  const inp = document.getElementById('script-url-input');
+  const url = inp ? inp.value.trim() : SCRIPT_URL;
+  if (!url) { mostrarConfigScript(true, 'Informe a URL antes de testar.'); return; }
+  const antiga = SCRIPT_URL;
+  SCRIPT_URL = url;
+  const r = await gsCall({ action: 'getBoletos' });
+  SCRIPT_URL = antiga;
+  const msg = r && Array.isArray(r.boletos)
+    ? `Conexao OK: ${r.boletos.length} boleto(s) encontrados. Clique em Salvar URL para usar esta conexao.`
+    : 'Nao foi possivel ler os boletos nesta URL.';
+  mostrarConfigScript(true, msg);
+}
 
 // 
 // ██ NOVAS FUNÇÕES v2.0 — ALTERAR VENCIMENTO ÚNICO + ATUALIZAÇÃO EM MASSA ██
@@ -1252,19 +1312,52 @@ async function salvarNovoVencimento() {
 }
 
 // ─── ATUALIZAÇÃO EM MASSA ────────────────────────────────────────────────────
+function dividirEmLotes(lista, tamanho) {
+  const lotes = [];
+  for (let i = 0; i < lista.length; i += tamanho) lotes.push(lista.slice(i, i + tamanho));
+  return lotes;
+}
+
 async function atualizarBoletosMassa() {
   if (!csvUpdateContent) { notify('Selecione um arquivo CSV primeiro.'); return; }
 
   const parsed = parseCSVFacil123(csvUpdateContent);
   if (parsed.length === 0) { notify('Nenhum boleto reconhecido. Verifique o CSV.'); return; }
 
-  const r = await gsCall({ action: 'updateBoletosMassa', boletos: parsed });
-  if (!r) return;
-
   const res = document.getElementById('update-result');
+  const lotes = dividirEmLotes(parsed, 80);
+  const total = {
+    ok: true,
+    atualizados: [],
+    naoEncontrados: [],
+    semAlteracao: [],
+    resumo: { processados: 0, alterados: 0, semAlteracao: 0, naoLocalizados: 0 }
+  };
 
-  if (r.ok) {
-    const { alterados, semAlteracao, naoLocalizados, processados } = r.resumo;
+  for (let i = 0; i < lotes.length; i++) {
+    if (res) {
+      res.innerHTML = `Enviando lote ${i + 1}/${lotes.length} para o Sheets...`;
+      res.className = 'update-result show';
+    }
+    const r = await gsCall({ action: 'updateBoletosMassa', boletos: lotes[i] });
+    if (!r || !r.ok) {
+      if (res) {
+        res.innerHTML = ' Falha no lote ' + (i + 1) + '. Tente novamente; os lotes anteriores ja foram processados.';
+        res.className = 'update-result show warn';
+      }
+      return;
+    }
+    total.atualizados.push(...(r.atualizados || []));
+    total.naoEncontrados.push(...(r.naoEncontrados || []));
+    total.semAlteracao.push(...(r.semAlteracao || []));
+    total.resumo.processados += r.resumo ? r.resumo.processados : lotes[i].length;
+    total.resumo.alterados += r.resumo ? r.resumo.alterados : (r.atualizados || []).length;
+    total.resumo.semAlteracao += r.resumo ? r.resumo.semAlteracao : (r.semAlteracao || []).length;
+    total.resumo.naoLocalizados += r.resumo ? r.resumo.naoLocalizados : (r.naoEncontrados || []).length;
+  }
+
+  if (total.ok) {
+    const { alterados, semAlteracao, naoLocalizados, processados } = total.resumo;
     let html = `<div class="update-stat">
       <div class="update-stat-item"><strong>${processados}</strong><br>processados</div>
       <div class="update-stat-item" style="color:var(--accent);"><strong>${alterados}</strong><br>atualizados</div>
@@ -1274,18 +1367,19 @@ async function atualizarBoletosMassa() {
     }
     html += `</div>`;
 
-    if (r.atualizados && r.atualizados.length > 0) {
+    if (total.atualizados && total.atualizados.length > 0) {
       html += `<div style="margin-top:6px;font-size:12px;color:var(--text2);">`;
-      r.atualizados.forEach(item => {
+      total.atualizados.slice(0, 80).forEach(item => {
         html += `<div style="padding:3px 0;border-bottom:1px solid var(--border);">
           <strong>${item.nome||item.facilId}</strong> — ${item.alteracoes.join(' | ')}
         </div>`;
       });
+      if (total.atualizados.length > 80) html += `<div style="padding:4px 0;">...mais ${total.atualizados.length - 80} alteracao(oes)</div>`;
       html += `</div>`;
     }
 
-    if (r.naoEncontrados && r.naoEncontrados.length > 0) {
-      html += `<div class="update-nao-encontrados">IDs não localizados: ${r.naoEncontrados.join(', ')}</div>`;
+    if (total.naoEncontrados && total.naoEncontrados.length > 0) {
+      html += `<div class="update-nao-encontrados">IDs não localizados: ${total.naoEncontrados.slice(0, 120).join(', ')}${total.naoEncontrados.length > 120 ? '...' : ''}</div>`;
     }
 
     res.innerHTML = html;
@@ -1293,7 +1387,41 @@ async function atualizarBoletosMassa() {
 
     if (alterados > 0) await carregarDados();
   } else {
-    res.innerHTML = ' Erro: ' + (r.error || 'Falha ao atualizar.');
+    res.innerHTML = ' Erro: Falha ao atualizar.';
+    res.className = 'update-result show warn';
+  }
+}
+
+async function sincronizarPeriodoOficial() {
+  if (!csvUpdateContent) { notify('Selecione um arquivo CSV primeiro.'); return; }
+
+  const parsed = parseCSVFacil123(csvUpdateContent);
+  if (parsed.length === 0) { notify('Nenhum boleto reconhecido. Verifique o CSV.'); return; }
+
+  const ok = confirm(
+    'Esta sincronizacao usa o CSV como fonte oficial do periodo.\\n\\n' +
+    'Ela atualiza existentes, insere faltantes e marca como cancelado os boletos do CRM que impactam este periodo mas nao aparecem no CSV.\\n\\n' +
+    'As linhas nao serao apagadas; a alteracao fica registrada para auditoria. Continuar?'
+  );
+  if (!ok) return;
+
+  const r = await gsCall({ action: 'syncBoletosPeriodoOficial', boletos: parsed });
+  if (!r) return;
+
+  const res = document.getElementById('update-result');
+  if (r.ok) {
+    res.innerHTML = `<div style="font-weight:600;margin-bottom:8px;">Sincronizacao oficial concluida</div>
+      <div class="update-stat">
+        <div class="update-stat-item"><strong>${r.resumo.processados}</strong><br>processados</div>
+        <div class="update-stat-item" style="color:var(--accent);"><strong>${r.resumo.inseridos}</strong><br>inseridos</div>
+        <div class="update-stat-item" style="color:#7c3aed;"><strong>${r.resumo.atualizados}</strong><br>atualizados</div>
+        <div class="update-stat-item" style="color:var(--danger);"><strong>${r.resumo.canceladosForaCSV}</strong><br>fora do CSV</div>
+      </div>`;
+    res.className = 'update-result show';
+    notify('Periodo sincronizado com o CSV oficial.');
+    await carregarDados();
+  } else {
+    res.innerHTML = ' Erro: ' + (r.error || 'Falha ao sincronizar.');
     res.className = 'update-result show warn';
   }
 }
@@ -2227,36 +2355,78 @@ function setBotoesSalvar(bloqueado) {
 
 async function gsCall(payload) {
   const url = SCRIPT_URL;
-  if (!url) { notify('Configure a URL do script primeiro.'); return null; }
+  if (!url) {
+    mostrarConfigScript(true, 'Configure a URL do Apps Script para sincronizar com o Google Sheets.');
+    notify('Configure a URL do script primeiro.');
+    return null;
+  }
   if (salvando) { notify(' Aguarde, operação em andamento...'); return null; }
   salvando = true;
-  setBotoesSalvar(true);
+  const bloqueiaBotoes = payload && payload.action !== 'getBoletos';
+  if (bloqueiaBotoes) setBotoesSalvar(true);
   mostrarLoading(true);
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const timeoutMsPorAcao = {
+    getBoletos: 120000,
+    updateBoletosMassa: 120000,
+    syncBoletosPeriodoOficial: 180000,
+    addBoletos: 120000
+  };
+  const timeoutMs = timeoutMsPorAcao[payload && payload.action] || 60000;
+  const tentativasMax = payload && payload.action === 'getBoletos' ? 4 : 3;
+  let ultimoErro = null;
   try {
-    const r = await fetch(url, {
-      method: 'POST',
-      cache: 'no-store',
-      redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload),
-      signal: controller.signal
-    });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const txt = await r.text();
-    const data = JSON.parse(txt);
-    return data;
+    for (let tentativa = 1; tentativa <= tentativasMax; tentativa++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const r = await fetch(url, {
+          method: 'POST',
+          cache: 'no-store',
+          redirect: 'follow',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const txt = await r.text();
+        if (!txt.trim().startsWith('{') && !txt.trim().startsWith('[')) {
+          throw new Error('Resposta invalida do Apps Script');
+        }
+        const data = JSON.parse(txt);
+        if (data && data.error) throw new Error(data.error);
+        return data;
+      } catch (e) {
+        ultimoErro = e;
+        const erro = String(e && e.message || '');
+        const temporario = e && e.name === 'AbortError' || erro.includes('HTTP 404') || erro.includes('Resposta invalida') || erro.includes('Failed to fetch');
+        if (!temporario || tentativa === tentativasMax) break;
+        setSyncStatus(`Tentando novamente (${tentativa + 1}/${tentativasMax})...`);
+        await new Promise(resolve => setTimeout(resolve, 1200 * tentativa));
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+    throw ultimoErro || new Error('Falha desconhecida');
   } catch(e) {
-    const msg = e && e.name === 'AbortError'
-      ? 'Tempo esgotado ao conectar com o Google Sheets. Tente atualizar novamente.'
-      : 'Erro ao conectar com o Google Sheets. Verifique a URL do script.';
+    let msg = 'Erro ao conectar com o Google Sheets. Verifique a URL do script.';
+    if (e && e.name === 'AbortError') {
+      msg = 'Tempo esgotado ao conectar com o Google Sheets. A planilha demorou mais que ' + Math.round(timeoutMs / 1000) + 's para responder.';
+    } else if (e && String(e.message || '').includes('HTTP 404')) {
+      msg = 'O Google Apps Script oscilou e retornou 404. Tente novamente; se persistir, verifique a URL em ⚙ Sheets.';
+    } else if (e && String(e.message || '').includes('Resposta invalida')) {
+      msg = 'O Google Apps Script respondeu fora do padrão. Tente novamente em alguns segundos.';
+    } else if (e && e.message) {
+      msg = 'Erro no Apps Script: ' + e.message;
+    }
+    setSyncStatus('Erro no Sheets');
+    if (!(String(e && e.message || '').includes('HTTP 404') || String(e && e.message || '').includes('Resposta invalida'))) {
+      mostrarConfigScript(true, msg);
+    }
     notify(msg);
     return null;
   } finally {
-    clearTimeout(timeoutId);
     salvando = false;
-    setBotoesSalvar(false);
+    if (bloqueiaBotoes) setBotoesSalvar(false);
     mostrarLoading(false);
   }
 }
@@ -2265,8 +2435,29 @@ async function carregarDados() {
   if (!SCRIPT_URL) return;
   setSyncStatus('Carregando...');
   const data = await gsCall({ action: 'getBoletos' });
-  if (!data) { setSyncStatus('Erro'); return; }
+  if (!data) {
+    try {
+      const cache = JSON.parse(localStorage.getItem('crmBoletosCache') || 'null');
+      if (cache && Array.isArray(cache.boletos)) {
+        boletos = cache.boletos;
+        atualizarIconesOrdem();
+        renderTabela();
+        renderSummary();
+        setSyncStatus('Modo cache ' + (cache.salvoEm || ''));
+        notify('Sheets oscilou. Mostrando dados salvos localmente.');
+        return;
+      }
+    } catch (e) {}
+    setSyncStatus('Erro');
+    return;
+  }
   boletos = data.boletos || [];
+  try {
+    localStorage.setItem('crmBoletosCache', JSON.stringify({
+      salvoEm: new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}),
+      boletos
+    }));
+  } catch (e) {}
   atualizarIconesOrdem();
   renderTabela();
   renderSummary();
@@ -2332,29 +2523,55 @@ async function salvarBoletos() {
 }
 
 
-// ─── PARSER CSV FCIL123 ─────────────────────────────────────────────────────
-// Substitui o antigo parseBlocoFacil123.
-// Aceita CSV com ; ou , como separador. Filtra apenas:
-//   tipo = "Recebimento" E categoria 1 = "Receitas: Vendas" (ou contém "Vendas")
-// Retorna objetos com: { facilId, titularId, nome, valor, vencimento,
-//                        dataPagamento, juros, valorTotal, realizado }
+// ─── PARSER CSV FACIL123 ─────────────────────────────────────────────────────
+// Fonte oficial para os cards:
+//   A receber = Recebimento + Vendas + realizado=Não, por vencimento, valor principal.
+//   Recebidos = Recebimento + Vendas + realizado=Sim, por pago em, coluna valor.
 function parseCSVFacil123(texto) {
   const linhas = texto.replace(/\r/g, '').split('\n').filter(l => l.trim());
   if (linhas.length < 2) return [];
 
-  // Detectar separador (;  ou ,)
-  const cabecalho = linhas[0];
-  const sep = cabecalho.includes(';') ? ';' : ',';
+  const normalizaTexto = s => String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
 
-  // Mapear índices das colunas pelo cabeçalho
-  const cols = cabecalho.split(sep).map(c => c.trim().replace(/^"|"$/g, '').toLowerCase());
-  const idx = name => cols.indexOf(name);
+  const parseLinha = (linha, sep) => {
+    const campos = [];
+    let campo = '', dentroAspas = false;
+    for (let i = 0; i < linha.length; i++) {
+      const ch = linha[i];
+      const prox = linha[i + 1];
+      if (ch === '"' && dentroAspas && prox === '"') { campo += '"'; i++; }
+      else if (ch === '"') dentroAspas = !dentroAspas;
+      else if (ch === sep && !dentroAspas) { campos.push(campo); campo = ''; }
+      else campo += ch;
+    }
+    campos.push(campo);
+    return campos.map(c => c.trim().replace(/^"|"$/g, ''));
+  };
+
+  const contarSep = (linha, sep) => {
+    let total = 0, dentroAspas = false;
+    for (let i = 0; i < linha.length; i++) {
+      const ch = linha[i], prox = linha[i + 1];
+      if (ch === '"' && dentroAspas && prox === '"') { i++; continue; }
+      if (ch === '"') dentroAspas = !dentroAspas;
+      else if (ch === sep && !dentroAspas) total++;
+    }
+    return total;
+  };
+
+  const cabecalho = linhas[0];
+  const sep = contarSep(cabecalho, ';') > contarSep(cabecalho, ',') ? ';' : ',';
+  const cols = parseLinha(cabecalho, sep).map(normalizaTexto);
+  const idx = name => cols.indexOf(normalizaTexto(name));
 
   const iId    = idx('id');
   const iTipo  = idx('tipo');
   const iTitId = idx('titular id');
   const iTit   = idx('titular');
-  const iData  = idx('data');
   const iVence = idx('vence em');
   const iPago  = idx('pago em');
   const iValor = idx('valor');
@@ -2376,7 +2593,10 @@ function parseCSVFacil123(texto) {
 
   const fmtValor = s => {
     if (!s || s.trim() === '') return '0,00';
-    const v = parseFloat(s.trim().replace(/\./g,'').replace(',','.'));
+    const limpo = String(s).trim().replace(/[^\d.,-]/g, '');
+    const v = limpo.includes(',')
+      ? parseFloat(limpo.replace(/\./g,'').replace(',','.'))
+      : parseFloat(limpo);
     if (isNaN(v)) return '0,00';
     return v.toFixed(2).replace('.',',');
   };
@@ -2392,27 +2612,13 @@ function parseCSVFacil123(texto) {
   const resultado = [];
 
   for (let i = 1; i < linhas.length; i++) {
-    // Dividir preservando campos entre aspas
-    const campos = [];
-    let campo = '', dentroAspas = false;
-    for (const ch of linhas[i]) {
-      if (ch === '"') { dentroAspas = !dentroAspas; }
-      else if (ch === sep && !dentroAspas) { campos.push(campo); campo = ''; }
-      else campo += ch;
-    }
-    campos.push(campo);
-
-    const get = n => (campos[n] || '').trim().replace(/^"|"$/g,'');
-
-    const normalizaTexto = s => String(s || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
+    const campos = parseLinha(linhas[i], sep);
+    const get = n => n >= 0 ? (campos[n] || '').trim() : '';
 
     const tipo  = normalizaTexto(get(iTipo));
     const cat1  = normalizaTexto(get(iCat1));
     const cat2  = normalizaTexto(get(iCat2));
-    const real  = get(iReal);
+    const real  = normalizaTexto(get(iReal));
 
     // Só importa Recebimentos com categoria Vendas
     if (!tipo.includes('recebimento')) continue;
@@ -2428,8 +2634,8 @@ function parseCSVFacil123(texto) {
     const valor      = cat1.includes('venda') ? valorCat1 : valorCat2; // principal sem juros
     const juros      = (cat1.includes('juro') || cat1.includes('multa')) ? valorCat1
                      : ((cat2.includes('juro') || cat2.includes('multa')) ? valorCat2 : '0,00');
-    const valorTotal = fmtValor(get(iValor));    // total pago
-    const realizado  = real.toLowerCase() === 'sim' ? 'sim' : 'nao';
+    const valorTotal = fmtValor(get(iValor));    // total oficial do Fácil nos recebidos
+    const realizado  = real === 'sim' ? 'sim' : 'nao';
     const status     = realizado === 'sim' ? 'pago' : 'pendente';
 
     if (!facilId || !nome || !vencimento) continue;
@@ -3306,6 +3512,62 @@ function lerArquivoCSV(file) {
   reader.readAsText(file, 'UTF-8');
 }
 
+function mesKeyDataBR(valor) {
+  const d = dataBRToDate(valor);
+  if (!d) return '';
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function numeroValorBR(valor) {
+  return parseFloat((normalizarValor(valor || '0')).replace(/\./g,'').replace(',','.')) || 0;
+}
+
+function moedaBR(valor) {
+  return 'R$ ' + valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function auditoriaCSVFacil(parsed) {
+  const baixados = ['pago', 'acordo_realizado', 'cancelado'];
+  const idsCSV = new Set(parsed.map(b => String(b.facilId || '').trim()).filter(Boolean));
+  const mesesReceber = new Set(parsed.filter(b => b.realizado === 'nao').map(b => mesKeyDataBR(b.vencimento)).filter(Boolean));
+  const mesesRecebidos = new Set(parsed.filter(b => b.realizado === 'sim').map(b => mesKeyDataBR(b.dataPagamento)).filter(Boolean));
+
+  const csvReceber = parsed.filter(b => b.realizado === 'nao' && mesesReceber.has(mesKeyDataBR(b.vencimento)));
+  const csvRecebidos = parsed.filter(b => b.realizado === 'sim' && mesesRecebidos.has(mesKeyDataBR(b.dataPagamento)));
+
+  const crmReceber = boletos.filter(b => {
+    if (baixados.includes(b.status)) return false;
+    return mesesReceber.has(mesKeyDataBR(b.vencimento));
+  });
+  const crmRecebidos = boletos.filter(b => {
+    if (b.status !== 'pago') return false;
+    const dp = getDataPagamentoBoleto(b);
+    if (!dp) return false;
+    const key = dp.getFullYear() + '-' + String(dp.getMonth() + 1).padStart(2, '0');
+    return mesesRecebidos.has(key);
+  });
+
+  const faltando = parsed.filter(b => !boletos.some(c => String(c.facilId || '').trim() === String(b.facilId || '').trim()));
+  const sobrandoReceber = crmReceber.filter(b => b.facilId && !idsCSV.has(String(b.facilId).trim()));
+  const sobrandoRecebidos = crmRecebidos.filter(b => b.facilId && !idsCSV.has(String(b.facilId).trim()));
+
+  return {
+    csvReceberQtd: csvReceber.length,
+    csvReceberValor: csvReceber.reduce((s,b) => s + numeroValorBR(b.valor), 0),
+    csvRecebidosQtd: csvRecebidos.length,
+    csvRecebidosValor: csvRecebidos.reduce((s,b) => s + numeroValorBR(b.valorTotal), 0),
+    crmReceberQtd: crmReceber.length,
+    crmReceberValor: crmReceber.reduce((s,b) => s + numeroValorBR(b.valor), 0),
+    crmRecebidosQtd: crmRecebidos.length,
+    crmRecebidosValor: crmRecebidos.reduce((s,b) => s + numeroValorBR(b.valorTotal || b.valor), 0),
+    faltandoQtd: faltando.length,
+    sobrandoReceberQtd: sobrandoReceber.length,
+    sobrandoReceberValor: sobrandoReceber.reduce((s,b) => s + numeroValorBR(b.valor), 0),
+    sobrandoRecebidosQtd: sobrandoRecebidos.length,
+    sobrandoRecebidosValor: sobrandoRecebidos.reduce((s,b) => s + numeroValorBR(b.valorTotal || b.valor), 0)
+  };
+}
+
 function lerArquivoCSVUpdate(file) {
   if (!file) return;
   const reader = new FileReader();
@@ -3314,6 +3576,7 @@ function lerArquivoCSVUpdate(file) {
     const parsed  = parseCSVFacil123(csvUpdateContent);
     const preview = document.getElementById('update-preview');
     const btn     = document.getElementById('btn-atualizar-massa');
+    const btnOficial = document.getElementById('btn-sync-oficial');
     const dz      = document.getElementById('drop-zone-update');
 
     if (parsed.length === 0) {
@@ -3322,12 +3585,30 @@ function lerArquivoCSVUpdate(file) {
       preview.style.borderColor = 'var(--danger)';
       preview.innerHTML = ' Nenhum boleto encontrado. Verifique o arquivo.';
       btn.style.display = 'none';
+      if (btnOficial) btnOficial.style.display = 'none';
     } else {
+      const audit = auditoriaCSVFacil(parsed);
       preview.style.display = 'block';
       preview.style.background = 'var(--accent-bg)';
       preview.style.borderColor = 'var(--accent)';
-      preview.innerHTML = `✅ <strong>${parsed.length} boleto(s)</strong> em <strong>${file.name}</strong> prontos para comparação.`;
+      preview.innerHTML = `✅ <strong>${parsed.length} boleto(s)</strong> em <strong>${file.name}</strong> prontos para comparação.
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px;">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;">
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;">CSV oficial</div>
+            <div><strong>A receber:</strong> ${moedaBR(audit.csvReceberValor)} (${audit.csvReceberQtd})</div>
+            <div><strong>Recebido:</strong> ${moedaBR(audit.csvRecebidosValor)} (${audit.csvRecebidosQtd})</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;">
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;">CRM atual</div>
+            <div><strong>A receber:</strong> ${moedaBR(audit.crmReceberValor)} (${audit.crmReceberQtd})</div>
+            <div><strong>Recebido:</strong> ${moedaBR(audit.crmRecebidosValor)} (${audit.crmRecebidosQtd})</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:${(audit.faltandoQtd || audit.sobrandoReceberQtd || audit.sobrandoRecebidosQtd) ? 'var(--danger)' : 'var(--accent)'};">
+          Auditoria: ${audit.faltandoQtd} faltando no CRM · ${audit.sobrandoReceberQtd} sobrando em A receber (${moedaBR(audit.sobrandoReceberValor)}) · ${audit.sobrandoRecebidosQtd} sobrando em Recebidos (${moedaBR(audit.sobrandoRecebidosValor)})
+        </div>`;
       btn.style.display = 'block';
+      if (btnOficial) btnOficial.style.display = 'block';
       dz.style.borderColor = 'var(--accent)';
       dz.style.background  = 'var(--accent-bg)';
       dz.innerHTML = `<div style="font-size:24px;margin-bottom:6px;">📄</div>
@@ -3569,6 +3850,8 @@ function resetDropZoneUpdate() {
   csvUpdateContent = '';
   const btn = document.getElementById('btn-atualizar-massa');
   if (btn) btn.style.display = 'none';
+  const btnOficial = document.getElementById('btn-sync-oficial');
+  if (btnOficial) btnOficial.style.display = 'none';
   const preview = document.getElementById('update-preview');
   if (preview) preview.style.display = 'none';
   const res = document.getElementById('update-result');
